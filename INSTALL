@@ -1,0 +1,61 @@
+SPECTRUM ANALYZER : ANALYSEUR de SPECTRE AUDIO en TEMPS REEL
+
+Le projet est construit sur les bibliothèques libres Gstreamer pour l'audio et sur les bibliothèques libres SDL, utilisées pour les jeux vidéo. Il est placé sous license GPL.
+
+Il s'agit d'un analyseur du spectre sonore en temps réel. Ses caractéristiques sont les suivantes.
+
+Les sources sonores:
+-----------------
+
+	- le microphone (bouton 'Mic/JACK') : reçoit l'entré du micro (micro intégré au laptop ou bien branché sur l'entrée jack), mais sans passer par le serveur son Jack (jack-audio-connection-kit);
+	- un fichier audio sélectionné; utilisable seulement si l'onglet 'JACK' n'est pas coché; la sélection de plusieurs fichiers audio est possible, mais il n'est pas possible actuellement de passer d'un fichier à l'autre; il est par contre possible de se déplacer dans le fichier en cours de lecture de 5 en 5 secondes en avant ('Seek Forward(5sec)' et en arrière ('Seek Backward(5sec)'). Si l'application est lancée dans un terminal, la durée totale du morceau ainsi que la position dans le morceau est affichée.
+	- le serveur JACK (jack-audio-connection-kit) : permet d'utiliser le serveur de son à basse latence Jack (jack-audio-connection-kit; http://jackaudio.org/) uniquement après sélection du bouton 'Mic/JACK'; il est ainsi possible d'analyser n'importe quelle source sonore passant par jack : soit le micro, soit un logiciel connecté, soit un fichier audio lu par un lecteur multimedia compatible avec jack comme Audacious par exemple (http://audacious-media-player.org/). Il faut redémarrer l'application après avoir utilisé Jack si on veut l'utiliser à nouveau SANS Jack; sans celà un rallentissement est possible.
+
+Les modes d'affichages :
+------------------------ 
+
+	- mode "continu" (bouton 'continuous') : affiche les fréquences en ordonnée (axe des Y) et le temps en abscisse (axe des X), défilant de droite à gauche; plusieurs vitesses de défilement sont possibles; l'intensité du signal est représentée par la qualité du rouge (plue le signal est rouge, plus il est fort; c'est donc plutot qualitatif que quantitatif);
+	- mode "instantané (bouton 'snapshot') : affiche l'amplitude en ordonnée (axe des Y) et les fréquences en abscisse (axe des X); ceci est la manière d'affichier d'autres logiciels tels que JAAA (JACK and ALSA Audio Analyser) ou JAPA (JACK and ALSA Perceptual Analyser) (http://www.kokkinizita.net/linuxaudio).
+	
+	Pour les deux modes d'affichages, l'étendue du spectre sonore visualisée est de 20000 Hz, mais un zoom est possible : on peut concentrer l'analyse sur une zone de 1000, 2000, 4000, 6000, 10000 ou 20000 Hz; par ailleurs, on peut faire démarrer ce zoom à partir de 0 Hz ou de 500 en 500 Hz jusqu'à 4000 Hz; par défaut, le zoom appliqué est de 0 à 6000 Hz.
+
+
+
+
+INSTALLER:
+---------------
+
+1. installer les dépendances:
+"""""""""""""""""""""""""""""
+
+	Pour Ubuntu 10.04 et 10.10
+		- libsdl-ttf2.0-dev;
+		- gstreamer0.10-plugins-bad (pour le support de Jack), gstreamer0.10-plugins-ugly (pour la lecture de fichier tels que les mp3), libgstreamer0.10-dev;
+		- jackd1 ou jackd2 (selon que vous voulez utiliser Jack 1 ou Jack2) et libjack-jackd2-dev pour Jack2 (libjack-dev pour Jack1);
+		- libgtk2.0;
+
+	Pour les autres distributions, les paquets doivent être assez similaires; sous Gentoo par exemple, il doit s'agir de : gcc, libsdl, sdl-ttf, gstreamer, gstreamer-plugins-good, -bad et -ugly, libgstreamer, jack-audio-connection-kit, libglib, libgtk.
+
+
+
+2. pas nécessaire pour Ubuntu : vérifier le fichier 'sdl.c' :
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
+
+Dans ce fichier, on utilise la police de caractère DejaVuSans, qui se trouve à '/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf' sur Ubuntu (et probablement sur Debian), mais qui peut se trouver ailleurs sur d'autres distributions, et qui doit être adapté. Pour celà, il faut ouvrir le fichier 'sdl.c' avec un éditeur de texte, et changer la ligne contenant le chemin concerné ( à la ligne 110) en remplaçant le chemin ci-dessus vers le bon chemin; on peut aussi utiliser une autre police bien sûr (le fichier doit avoit l'extension .ttf).
+
+
+
+3. se rendre dans le répertoire contenant les sources et compiler : 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Si le répertoire "spectrum-0.1.1" contenant les fichiers sources se trouve à '/home/nestor', on tapera dans un terminal  : cd /home/nestor/spectrum-0.1.1  (il faut remplacer "nestor" par le nom d'utilisateur).
+
+Ensuite taper (ou copier-coller) dans le terminal la commande magique suivante : 
+
+gcc -o Spectrum `pkg-config gstreamer-0.10 --cflags --libs` `pkg-config gtk+-2.0 --cflags --libs` `sdl-config --cflags --libs` -lSDL_ttf `pkg-config jack --cflags --libs` main.c sdl.c getPixels.c onClickButtons.c sdlWindow.c
+
+qui devrait fournir un exécutable (qui s'appelle 'Spectrum' dans ce même répertoire où se trouvent les sources. 
+
+Merci de me tenir au courant de quoi que ce soit qui ne marcherait pas... et merci de votre présence...!
+
+Victor 
+nadaeck@hotmail.com	
