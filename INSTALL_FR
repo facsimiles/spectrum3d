@@ -1,0 +1,119 @@
+SPECTRUM 3D: ANALYSEUR de SPECTRE AUDIO en TEMPS REEL en 3D
+
+Spectrum 3D affiche un spectrogramme en 3D en temps réel; il analyse soit l'entrée du micro, soit un fichier audio enregistré, soir l'entrée fournie par jack (jack-audio-connection-kit). Le projet est construit sur les bibliothèques libres Gstreamer, SDL, OpenGl et Gtk. Il est placé sous license GPL.
+
+*******************
+|  INSTALLATION:  |
+*******************
+
+1. dépendances:
+"""""""""""""""
+
+Pour Ubuntu 10.10, il faut installer des dépendances suivantes :
+		- gcc et pkg-config;
+		- libgtk+-2.0-dev;
+		- lidsdl1.2-dev et libsdl-ttf2.0-dev;
+		- libgl1-mesa-dev (pour openGL);
+		- libgstreamer0.10-dev;
+		- libjack-dev (pour jack1) ou libjack-jackd2-dev (par contre l'installation du paquet jackd n'est pas nécessaire pour la compilation si on ne veut pas l'utiliser);
+		- gstreamer0.10-plugins-bad (le support de Jack est passé dans les 'plugins-good' mais il semble que les pugins-bad soient encore nécessaires au bon fonctionnement avec Jack), gstreamer0.10-plugins-ugly et gstreamer0.10-plugins-ugly-multiverse (pour la lecture de fichier tels que les mp3);
+		
+
+	Pour les autres distributions, les paquets doivent être assez similaires; sous Gentoo par exemple, il doit s'agir de : gcc, libsdl, sdl-ttf, gstreamer, gstreamer-plugins-good, -bad et -ugly, libgstreamer, jack-audio-connection-kit, libglib, libgtk.
+
+
+
+2. pas nécessaire pour Ubuntu : vérifier la police de caractère :
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
+
+Dans Ubuntu 10.10, on utilise le fichier "/usr/share/fonts/truetype/freefont/FreeSans.ttf" pour la police caractère. Ceci se trouve dans le fichier sdlWindow.c aux environs de la ligne 462. Pour une autre distribution, il faut adapter manuellement le fichier sdlWindow.c en changeant le chemin de la police que l'on veut utiliser, en attendant que cette option soit disponible dans les préférences. 
+
+
+3. compilation : 
+""""""""""""""""
+ 	1) se rendre dans le répertoire contenant les fichiers sources; par exemple, si le répertoire "spectrum3d-0.2-1" contenant les fichiers sources se trouve à '/home/nestor', on tapera dans un terminal  : cd /home/nestor/spectrum3d-0.2.1 .
+
+	2) Ensuite copier-coller dans le terminal la commande magique suivante : 
+
+gcc -o spectrum `pkg-config jack gstreamer-0.10 gtk+-2.0 --libs --cflags` -lSDL -lSDL_ttf -lGL -lGLU  main.c onClick.c sdlWindow.c scale.c display.c text.c
+
+qui devrait fournir un exécutable appellé 'spectrum' dans le répertoire où se trouvent les sources. 
+
+
+*****************
+|  UTILISATION  |
+*****************
+
+Toutes les commandes, via l'interface graphique et via le clavier et/ou la souris, fonctionnent pendant l'analyse d'un fichier audio et pendant la pause; ceci permet d'analyser une image "gelée", en changeant perspective, sa position et son échelle.
+
+
+INTERFACE GRAPHIQUE :
+"""""""""""""""""""""
+
+Choix de la sources sonores : 
+-----------------------------
+Les sources sonores sont le micro (intégré au PC ou externe), un fichier audio ou bien une source sonore provenant de Jack; le choix de formats de fichiers supportés est très large, puisqu'il s'agit de toute le gamme fournie par Gstreamer. Pour les fichiers sonores, les boutons ">>" et "<<" permettent d'avancer ou de reculer de 5 secondes dans la lecture.
+
+	
+Gamme de fréquences analysées et affichées :
+--------------------------------------------
+Spectrum3D analyse le spectre auditif jusqu'à 20 000 Hz. Le zoom le plus précis est de 1000 Hz; par ailleurs, l'affichage peut commencer plus haut que 0; par exemple, on peut affichier un zoom sur les fréquences allant de 2000 à 4000 Hz. La précision maximale est de 2 Hz. Par défaut, le zoom appliqué affiche les fréquences de 0 à 6000 Hz.
+
+
+Choix de la vitesse de défilement :
+-----------------------------------
+6 Vitesse possibles.
+
+
+Echelle :
+---------
+Les cases à cocher 'text' et 'Lines' font apparaître des échelles numérique et de graduations; la case à cocher 'Panels' fait apparaître des "paneaux de séparation" verticaux parallèles aux lignes, donc la hauteur peut être réglée par le curseur 'Panel height'.
+
+
+Représentation temporelle :
+---------------------------
+Le curseur 'Depth' détermine l'axe du temps : à 0, il n'a qu'une représentation instantanée du spectrogramme produit au moment présent; à 1, on voit les 100 spectrogrammes précedents; à 2, on en voit 200.
+
+
+Amplitude de la représentation du signal sonore :
+-------------------------------------------------
+Curseur 'gain'.
+
+
+RACCOURCIS CLAVIER ET SOURIS :
+""""""""""""""""""""""""""""""	
+Certaines fonctions sont accessibles par le clavier ou par une combinaison de clavier et souris. Toutes les commandes via la souris se font avec le clic gauche enfoncé.
+
+Commande					Commande au clavier		Commande à le souris (+/-clavier)
+================================================================================================================================
+Play/pause					Barre d'espace
+Stop						Echap/Escape
+Rotation autour de l'axe des X			Flèche haut/bas			Curseur de la souris vers le haut/bas
+Rotation autour de l'axe des Y			Flèche droite/gauche		Curseur de la souris vers la droite/gauche
+Rotation autour de l'axe des Z			'c' + Flèche haut/bas		'c' + curseur de la souris vers le haut/bas
+Translation le long de l'axe des X		'x' + flèche droite/gauche	'x' + curseur de la souris vers la droite/gauche
+Translation le long de l'axe des Y		'y' + flèche haut/bas		'y' + curseur de la souris vers le haut/bas
+Translation le long de l'axe des Z		'z' + flèche droite/gauche	'z' + curseur de la souris vers le haut/bas
+Augmentation/diminution du Gain			'g' + Flèche haut/bas		'g' + curseur de la souris vers le haut/bas
+Augmentation/diminution du début du zoom	's' + Flèche haut/bas	
+	
+Lecture par tout petits échantillons de 50 
+msec, lors de la lecture d'un fichier audio
+en pause					'v' + flèche droite
+
+
+***************************
+|  REMARQUES IMPORTANTES  |
+***************************
+
+1. Bien qu'il s'agisse de 3D avec OpenGL, l'installation des pilotes permettant l'accélération 3D n'est pas requise, même si celle-ci peut améliorer la qulité du rendu.
+
+2. Spectrum 3D est assez gourmand en ressources, vu l'analyse en temps réel des données et leur affichage; 3 aspects peuvent être importants : la puissance du processeur, la puissance de la carte graphique, le type de noyau (générique, preempt ou RT). La consommation en ressources est proportionnelle à la largeur de le fenêtre principale; par défaut, elle est à 700 pixels, ce qui devrait convenir à beaucoup de machines; on peut augmenter la taille du rendu dans le Menu -> Edit -> Preferences; la largeur maximale est de 1200 pixels, ce qui marche mieux avec un processeur plus puissant, une bonne carte graphique (avec pilotes pour la 3D), et un noyau preempt uo temps réel.
+
+
+Merci de me tenir au courant de quoi que ce soit qui ne marcherait pas... et merci de votre présence...!
+
+Victor 
+nadaeck@hotmail.com	
+
+

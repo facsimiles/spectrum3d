@@ -1,61 +1,116 @@
-SPECTRUM ANALYZER : ANALYSEUR de SPECTRE AUDIO en TEMPS REEL
+SPECTRUM 3D: 3D AUDIO SPECTRUM ANALYSER IN REAL TIME
 
-Le projet est construit sur les bibliothèques libres Gstreamer pour l'audio et sur les bibliothèques libres SDL, utilisées pour les jeux vidéo. Il est placé sous license GPL.
+Spectrum 3D dispays a 3D audio spectrogram in real time; the source can be either the microphone or an audio file or jack (jack-audio-connection-kit). It is build with the Gstreamer, SDL, OpenGl et Gtk free libraries and is under GPL license.
 
-Il s'agit d'un analyseur du spectre sonore en temps réel. Ses caractéristiques sont les suivantes.
+*******************
+|  INSTALLATION:  |
+*******************
 
-Les sources sonores:
------------------
+1. dependencies:
+"""""""""""""""
 
-	- le microphone (bouton 'Mic/JACK') : reçoit l'entré du micro (micro intégré au laptop ou bien branché sur l'entrée jack), mais sans passer par le serveur son Jack (jack-audio-connection-kit);
-	- un fichier audio sélectionné; utilisable seulement si l'onglet 'JACK' n'est pas coché; la sélection de plusieurs fichiers audio est possible, mais il n'est pas possible actuellement de passer d'un fichier à l'autre; il est par contre possible de se déplacer dans le fichier en cours de lecture de 5 en 5 secondes en avant ('Seek Forward(5sec)' et en arrière ('Seek Backward(5sec)'). Si l'application est lancée dans un terminal, la durée totale du morceau ainsi que la position dans le morceau est affichée.
-	- le serveur JACK (jack-audio-connection-kit) : permet d'utiliser le serveur de son à basse latence Jack (jack-audio-connection-kit; http://jackaudio.org/) uniquement après sélection du bouton 'Mic/JACK'; il est ainsi possible d'analyser n'importe quelle source sonore passant par jack : soit le micro, soit un logiciel connecté, soit un fichier audio lu par un lecteur multimedia compatible avec jack comme Audacious par exemple (http://audacious-media-player.org/). Il faut redémarrer l'application après avoir utilisé Jack si on veut l'utiliser à nouveau SANS Jack; sans celà un rallentissement est possible.
+For Ubuntu 10.10, you have to install :
+		- gcc, pkg-config;
+		- libgtk+-2.0-dev;
+		- lidsdl1.2-dev, libsdl-ttf2.0-dev;
+		- libgl1-mesa-dev;
+		- libgstreamer0.10-dev;
+		- libjack-dev (for jack1) or libjack-jackd2-dev for jack2; if you don't use jack, the jackd package is not necessary; you choose either libjack-dev or libjack-jackd2-dev then just to allow the compilation;
+		- gstreamer0.10-plugins-bad (Jack's support is now in the 'plugins-good' but the 'pugins-bad' are still somehow needed to have it working), gstreamer0.10-plugins-ugly et gstreamer0.10-plugins-ugly-multiverse (for reading files such as mp3);
+		
+	Fot the other distributions, the dependencies should be very similar.
 
-Les modes d'affichages :
------------------------- 
+2. not necessary for Ubuntu : check the font location :
+""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
 
-	- mode "continu" (bouton 'continuous') : affiche les fréquences en ordonnée (axe des Y) et le temps en abscisse (axe des X), défilant de droite à gauche; plusieurs vitesses de défilement sont possibles; l'intensité du signal est représentée par la qualité du rouge (plue le signal est rouge, plus il est fort; c'est donc plutot qualitatif que quantitatif);
-	- mode "instantané (bouton 'snapshot') : affiche l'amplitude en ordonnée (axe des Y) et les fréquences en abscisse (axe des X); ceci est la manière d'affichier d'autres logiciels tels que JAAA (JACK and ALSA Audio Analyser) ou JAPA (JACK and ALSA Perceptual Analyser) (http://www.kokkinizita.net/linuxaudio).
+In Ubuntu 10.10, we use the "/usr/share/fonts/truetype/freefont/FreeSans.ttf" for font rendering. I you use another distribution you should adapt this. To do this you have to change manually the path to the font in the sdlWindow.c around the line 462. This will available soon in the preferences. 
+
+
+3. compilation : 
+""""""""""""""""
+ 	1) go to the directory where the sources are; for example, if the directory containing the source files "spectrum3d-0.2-1" is in '/home/nestor', you'll type in terminal  : cd /home/nestor/spectrum3d-0.2.1 .
+
+	2) Then copy and paste the following line : 
+
+gcc -o spectrum `pkg-config jack gstreamer-0.10 gtk+-2.0 --libs --cflags` -lSDL -lSDL_ttf -lGL -lGLU  main.c onClick.c sdlWindow.c scale.c display.c text.c
+
+that sould provide an executable binary called 'spectrum' in the directory where are the source; double click on it or run it in terminal. 
+
+
+*********
+|  USE  |
+*********
+
+All commands from keyboard and/mice works during playing or paused state.
+
+
+GRAPHICAL INTERFACE :
+"""""""""""""""""""""
+
+Choce of the audio source : 
+---------------------------
+Source can be the microphone, an audio file or jack-audio-connection-kit; file format than can be read is very large since it is provided by Gstreamer. While playing an audio file, ">>" et "<<" allows to seek 5seconds forward or backard in the playing audio file.
+
 	
-	Pour les deux modes d'affichages, l'étendue du spectre sonore visualisée est de 20000 Hz, mais un zoom est possible : on peut concentrer l'analyse sur une zone de 1000, 2000, 4000, 6000, 10000 ou 20000 Hz; par ailleurs, on peut faire démarrer ce zoom à partir de 0 Hz ou de 500 en 500 Hz jusqu'à 4000 Hz; par défaut, le zoom appliqué est de 0 à 6000 Hz.
+Range of frequencies that can be analysed and displayed :
+---------------------------------------------------------
+The range of analysed frequencies go up to 20 000 Hz. The most precise zoom is 1000 Hz; the display can start higher than 0 Hz; for example, you can display from 2000 to 4000 Hz. The maximal precision is 2 Hz. The default display is from 0 to 6000 Hz.
 
 
+Speed of display :
+------------------
+6 possible speeds.
 
 
-INSTALLER:
----------------
-
-1. installer les dépendances:
-"""""""""""""""""""""""""""""
-
-	Pour Ubuntu 10.04 et 10.10
-		- libsdl-ttf2.0-dev;
-		- gstreamer0.10-plugins-bad (pour le support de Jack), gstreamer0.10-plugins-ugly (pour la lecture de fichier tels que les mp3), libgstreamer0.10-dev;
-		- jackd1 ou jackd2 (selon que vous voulez utiliser Jack 1 ou Jack2) et libjack-jackd2-dev pour Jack2 (libjack-dev pour Jack1);
-		- libgtk2.0;
-
-	Pour les autres distributions, les paquets doivent être assez similaires; sous Gentoo par exemple, il doit s'agir de : gcc, libsdl, sdl-ttf, gstreamer, gstreamer-plugins-good, -bad et -ugly, libgstreamer, jack-audio-connection-kit, libglib, libgtk.
+Scale :
+-------
+The checkboxes 'Text' et 'Lines' allow the line scale and the numeric scale to appear; the checkbox 'Panels' allows "vertical separating panels" to appear whose height can be adjusted with the 'Panel height' cursor.
 
 
-
-2. pas nécessaire pour Ubuntu : vérifier le fichier 'sdl.c' :
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
-
-Dans ce fichier, on utilise la police de caractère DejaVuSans, qui se trouve à '/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf' sur Ubuntu (et probablement sur Debian), mais qui peut se trouver ailleurs sur d'autres distributions, et qui doit être adapté. Pour celà, il faut ouvrir le fichier 'sdl.c' avec un éditeur de texte, et changer la ligne contenant le chemin concerné ( à la ligne 110) en remplaçant le chemin ci-dessus vers le bon chemin; on peut aussi utiliser une autre police bien sûr (le fichier doit avoit l'extension .ttf).
+Temporal display :
+------------------
+The 'Depth' cursor détermines the lenght of the Z axis, which represents the time : at 0, the display is just a snapshot of the actual sound; at 2, you can see the maximum of ancient displays.
 
 
+Display of the amplitude of the signal :
+----------------------------------------
+Adjusted by the 'gain' cursor.
 
-3. se rendre dans le répertoire contenant les sources et compiler : 
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Si le répertoire "spectrum-0.1.1" contenant les fichiers sources se trouve à '/home/nestor', on tapera dans un terminal  : cd /home/nestor/spectrum-0.1.1  (il faut remplacer "nestor" par le nom d'utilisateur).
 
-Ensuite taper (ou copier-coller) dans le terminal la commande magique suivante : 
+KEYBOARD AND MOUSE SHORTCUTS :
+""""""""""""""""""""""""""""""	
+Some commands are ppossible by keyboard or keyborad and mouse combination. Every mouse commands are done with the left click.
 
-gcc -o Spectrum `pkg-config gstreamer-0.10 --cflags --libs` `pkg-config gtk+-2.0 --cflags --libs` `sdl-config --cflags --libs` -lSDL_ttf `pkg-config jack --cflags --libs` main.c sdl.c getPixels.c onClickButtons.c sdlWindow.c
+Command			Keyboard		Mouse (+/-keyboard)
+================================================================================================================================
+Play/pause		Space bar
+Stop			Escape
+Rotate around X axis	Up/dowm			Mouse up/down
+Rotate around Y axis	Right/left		Mouse right/left
+Rotate around Z axis	'c' + Up/dowm		'c' + mouse up/down
+Translate along X axis	'x' + left/right	'x' + mouse right/left
+Translate along Y axis	'y' + up/down		'y' + mouse up/down
+Translate along Z axis	'z' + up/down		'z' + mouse up/down
+Increase/decrease Gain	'g' + up/down		'g' + mouse up/down
+Change starting 
+of the zoom		's' + up/down
+Read small 50 msec 
+samples	of a paused
+audio file		'v' + left
 
-qui devrait fournir un exécutable (qui s'appelle 'Spectrum' dans ce même répertoire où se trouvent les sources. 
 
-Merci de me tenir au courant de quoi que ce soit qui ne marcherait pas... et merci de votre présence...!
+*********************
+|  IMPORTANT NOTES  |
+*********************
+
+1. Although it is 3D with OpenGL, the drivers allowing 3D acceleration are not needed, but it can help to have a better rendering.
+
+2. Spectrum 3D can use a lot of CPU, given the real-time analysis and display of the data's. 3 aspects are inportants : the power of the processor, the performance of the graphic card (with or without the 3D drivers) and the type of kernel that is beeing used (a preempt or real-time will have better performance. The amount of work is proportionnal to the width of the window, which is by fefault the smallest (700 pixels) which should suit to many machines; size of the display can then be increased in Menu -> Edit -> Preferences; the maximal width is 1200 pixels, with works better with a more powerfull processor and a good graphic card.
+
+
+Thank you for telling me whatever you want too and than you for your presence!
 
 Victor 
-nadaeck@hotmail.com	
+nadaeck (at) hotmail (dot) com	
+
+
