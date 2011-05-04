@@ -1,0 +1,297 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html><head>
+
+
+
+
+
+
+
+
+
+
+
+<meta content="text/html; charset=ISO-8859-1" http-equiv="content-type"><title>tutorial</title></head><body><br>
+<h1>TUTORIAL : HOW TO USE Spectrum3D?</h1>
+
+<h3><span style="font-weight: bold;">SPECTRUM 3D: 3D AUDIO SPECTRUM ANALYSER IN REAL TIME</span></h3>
+Spectrum 3D dispays a 3D audio spectrogram in real time; the source can
+be either the microphone or an audio file or optionally jack
+(jack-audio-connection-kit). Optionally, it supports multitouch
+gestures from touscreen and touchpad. Optionally also, Gstreamer input
+can be run in realtime even if Jack is not used. It is build with the
+Gstreamer, SDL, OpenGl, Gtk and uTouch-Geis free libraries and is under
+GPL license.<br>
+<br>
+If you want realtime and multitouch support, you should read the notes
+at the bottom of the document. There is also video tutorial.<br>
+<br>
+<span style="font-weight: bold; text-decoration: underline;">Plan:</span><br>
+<ol>
+  <li><a href="#1._How_to_install_Spectrum3d">How to install Spectrum3d?</a></li>
+  <li><a href="#2._How_to_use_Spectrum3d">How to use Spectrum3d?</a></li>
+  <li><a href="#3._Important_notes_about_RealTime_mode_">Important notes about RealTime mode</a></li>
+  <li><a href="#4._Multitouch_support_for_Spectrum3d">Multitouch support in Spectrum3d</a></li>
+  <li><a href="#5._More_information">More information</a><br>
+  </li>
+</ol>
+<ol>
+  
+</ol>
+<h2><a name="1._How_to_install_Spectrum3d"></a>1. How to install Spectrum3d?</h2>
+
+<h4>1. Install dependencies :</h4>
+All dependencies are available in the Ubuntu repositories.<br>
+<br>
+For Ubuntu 10.10 and 11.04 :<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; - gcc, pkg-config;<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; - libgtk+-2.0-dev;<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; - lidsdl1.2-dev and libsdl-ttf2.0-dev;<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; - libgstreamer0.10-dev;<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; - gstreamer0.10-plugins-bad,
+gstreamer0.10-plugins-bad-multiverse, gstreamer0.10-plugins-ugly et
+gstreamer0.10-plugins-ugly-multiverse (for reading files such as mp3);<br>
+<br>
+&nbsp;&nbsp;&nbsp; <span style="text-decoration: underline;">For JACK support : </span><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; - libjack-dev (for jack1) or libjack-jackd2-dev for jack2; <br>
+<br>
+&nbsp;&nbsp;&nbsp; <span style="text-decoration: underline;">For multitouch support (touchscreen and for touchpad in Natty):</span><br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; - libutouch-geis-dev in Natty; in
+Maverick, you have to install utouch-geis from uTouch website
+(https://launchpad.net/canonical-multitouch/utouch-geis) since we use
+here the Geis2 API and Ubuntu maverick provides the Geis1 API in the
+repositories.<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp; For the <span style="font-weight: bold;">other distributions than Ubuntu</span>, the dependencies should be very similar. uTouch-Geis is beeing ported in other distributions such as Gentoo or Fedora. <br>
+<br>
+<h4>2. Compile and install : </h4>
+&nbsp;&nbsp;&nbsp;&nbsp; 1) in a terminal, go to the directory where the sources are; <br>
+<br>
+&nbsp;&nbsp;&nbsp; for example, if the sources are in the '/home/victor' directory :<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cd /home/victor/spectrum3d-0.2-2<br>
+<br>
+&nbsp;&nbsp;&nbsp; 2) type : <br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ./configure <br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;  add the options : &nbsp; <span style="font-weight: bold; font-style: italic;">--enable-jack</span>&nbsp;&nbsp; if you want JACK support,&nbsp;&nbsp; <span style="font-weight: bold; font-style: italic;">--enable-realtime</span> &nbsp; if you want realtime support when you don't use jack,&nbsp;&nbsp; <span style="font-weight: bold; font-style: italic;">--enable-geis</span>&nbsp;&nbsp;&nbsp;
+if you want multitouch support (for touchscreen or multitouch
+touchpad). For example, if you want the 3 options enabled (Jack
+support, RealTime without Jack and Multitouch support), you'll have to
+type :<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; ./configure --enable-jack --enable-realtime --enable-multitouch<br>
+<br>
+&nbsp;&nbsp;&nbsp; It doesn't matter whiwh argument you put first.<br>
+<br>
+&nbsp;&nbsp;&nbsp; 3) type :<br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; make<br>
+<br>
+&nbsp;&nbsp;&nbsp; 4) type : <br>
+<br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sudo make install (the password will be necessary)<br>
+<br>
+<br>
+<br>
+<h2><a name="2._How_to_use_Spectrum3d"></a>2. How to use Spectrum3d?</h2>
+&nbsp;&nbsp;&nbsp; Launch Spectrum3d from the Menu-&gt;Applications-&gt;Audio
+&amp; Video, or type in a terminal :<br>
+<br>
+&nbsp;&nbsp;&nbsp; <span style="font-style: italic;">spectrum3d</span><br>
+
+
+<br>
+
+
+&nbsp;&nbsp;&nbsp; In case of problems, run it in a terminal for debugging purpose.<br>
+
+
+<br>
+<br>&nbsp;&nbsp;&nbsp; At start you'll see this :<br>
+<br>
+<img style="width: 517px; height: 345px;" alt="spectrum3d_gui" src="files/gui.jpg"><br>
+<br>&nbsp;&nbsp;&nbsp; Source can be Microphone ("Mic"), audio file or Jack input (this option
+doesn't appear if you din't enable jack support at compilation). If you
+play an audio file, you can seek forward or backward (5 seconds by 5
+seconds) while it is playing. Selection of multiple audio files is possible.<br>
+<br>&nbsp;&nbsp;&nbsp; Once you click on the 'Play/Pause' button, you'll have a new window display the the 3D spectrum :<br>
+<br>
+<img style="width: 676px; height: 471px;" alt="snapshot1" src="files/spectrum1.jpg"><br>
+<br>
+&nbsp;&nbsp;&nbsp; The <span style="font-weight: bold;">X axis</span> represents the frequencies; the <span style="font-weight: bold;">Y axis</span>
+represents the amplitude of each frequency; the <span style="font-weight: bold;">Z axis</span> reprenets the
+time.<br>
+<br>&nbsp;&nbsp;&nbsp; The default range of analysed frequencies is
+from 0 to 6000 Hz, but you can adjust it (possible
+ranges are 1000, 2000, 4000, 6000, 10000 and 20000 Hz). The display of
+freqnecies starts at 0 by default but you change it (0 to 4000 Hz,
+increasing
+by steps of 500). You can also change the
+speed of the display (6 differents speeds).<br>
+<br>&nbsp;&nbsp;&nbsp; You can choose to display or not the lines of the scale as well as the
+numbers of the scale by checking or not the apropriate check boxes.
+Also you can display vertical panels that separate the display into
+regions. You can chose the height of those panels with&nbsp; the&nbsp;
+'Panel height'&nbsp; scale.<br>
+<br>&nbsp;&nbsp;&nbsp; Now that you have a 3D display, you may want to
+<span style="font-weight: bold;">change the perspective</span>, or the zoom, either in the playing state (when
+the display is ever changing) or in
+the paused state (when the display is frozen). You can change the
+perspective of the view in any direction you want,
+either by rotating the display around the X, Y or Z axis, or by
+translating it along the 3 axes. You can also change the displaying of
+the amplitude of the sound with the 'Gain' scale. This can be done if
+Spectrum3d is in the playing state or in
+the paused state.&nbsp; Note that you can also
+change the range of the zoom and the first diplayed value while
+Spectrum3d is paused.<br>
+<br>&nbsp;&nbsp;&nbsp; The pictures below show the same sound while the playing has been paused, from several perspectives :<br>
+<br>
+<img style="width: 272px; height: 191px;" alt="spectrum2" src="files/spectrum2.jpg">&nbsp;&nbsp;&nbsp;  <img style="width: 272px; height: 191px;" alt="spectrum3" src="files/spectrum3.jpg"> &nbsp;&nbsp;  <img style="width: 265px; height: 193px;" alt="spectrum5" src="files/spectrum4.jpg">&nbsp;&nbsp;&nbsp;  <img style="width: 271px; height: 193px;" alt="spectrum8" src="files/spectrum5.jpg">&nbsp;&nbsp; <br>
+<br>
+&nbsp;&nbsp;&nbsp; This can be done either by keyboard commands, or a
+combination of keyboard commands and mouse movements, or gestures on
+the touchscreen or touchpad. This is summarized in the windows from the
+'Help' menu :<br>
+<br>
+<img style="width: 699px; height: 431px;" alt="shortcuts" src="files/shortcuts.png"><br>
+<br>
+<img style="width: 500px; height: 328px;" alt="gestures" src="files/gestures.png"><br>
+<br>&nbsp;&nbsp;&nbsp; The 'Depth' scale allows to show more frame along the Z axis. The
+display can then 'extend' in depth. If you set 'Depth' to 0 and click
+on the 'Front View', you'll have front view of&nbsp; a single frame (the
+first one).<br>
+<br>
+<img style="width: 278px; height: 194px;" alt="spectrum9" src="files/spectrum9.jpg"> &nbsp; &nbsp; &nbsp;&nbsp;<img style="width: 276px; height: 193px;" alt="spectrum10" src="files/spectrum10.jpg"> &nbsp; <img style="width: 272px; height: 194px;" alt="spectrum11" src="files/spectrum11.jpg"><br>
+<br>
+<br>
+<h3>&nbsp;&nbsp;&nbsp; Preferences</h3>
+&nbsp;&nbsp;&nbsp; The 'Preferences' is located at 'Menu-&gt;Edit' :<br>
+<br>
+&nbsp; <img style="width: 414px; height: 332px;" alt="preferences" src="files/preferences.png"><br>
+<br>
+This windows allows :<br>
+<ul>
+  <li>&nbsp; to change the width of the window (700 to 1200 pixels);</li>
+  <li>&nbsp; to select the font to be used;</li>
+  <li>&nbsp; to change the time interval betwen two analysis frames;</li>
+  <li>&nbsp; to save the current coordinates as the coordinates that will be used when the 'Preset' button will be clicked.&nbsp;<br>
+  </li>
+</ul>
+<br>
+<br>
+<h2><a name="3._Important_notes_about_RealTime_mode_"></a>3. Important notes about RealTime mode<br>
+</h2>
+RealTime mode will allow Spectrum3d to have priority on other running
+processes, in order to not be slowed down by them. In any case, it
+won't decrease the amount of CPU and GPU ressources needed to perform
+the task. <br>
+IMPORTANT WARNING : If you enable RealTime mode and if you don't do the following, you'll have to run Spectrum3d as root.<br>
+<br>
+<h3>Edit audio.conf file and make yourself a member of 'audio' group</h3>
+If you want to take advantage of this you should edit or create an '/etc/security/limits.d/audio.conf' file : <br>
+<br>
+&nbsp;&nbsp;&nbsp; sudo gedit /etc/security/limits.d/audio.conf<br>
+<br>
+and put this inside : <br>
+<br>
+&nbsp;&nbsp;&nbsp; @audio&nbsp;&nbsp; -&nbsp; rtprio&nbsp;&nbsp;&nbsp;&nbsp; 95<br>
+&nbsp;&nbsp;&nbsp; @audio&nbsp;&nbsp; -&nbsp; memlock&nbsp;&nbsp;&nbsp; unlimited<br>
+<br>
+then you should add yourself as a member of the 'audio' group :<br>
+<br>
+&nbsp;&nbsp;&nbsp; - either go in <span style="font-weight: bold;">System-&gt;Preferences-&gt;Users</span> and <span style="font-weight: bold;">Groups-&gt;Manage Groups</span>, then select the 'audio' group, click on 'Properties' and add yourself;<br>
+&nbsp;&nbsp;&nbsp; - or type in a terminal : sudo adduser ${LOGNAME} audio<br>
+<br>
+then reboot.<br>
+<big style="color: red;"><span style="font-weight: bold;">IMPORTANT WARNING : If you enable RealTime mode and if you don't do this, you'll have to run Spectrum3d as root</span></big> :<br>
+<br>
+&nbsp;&nbsp;&nbsp; sudo spectrum3d<br>
+<br>
+<h3>How to check that you are using realtime policy?</h3>
+<br>
+If realtime mode is chosen, gstreamer will play the sound with the RR
+('Round Robin') policy with a priority of 50. You can check that the RR
+policy is used by typing in a terminal :<br>
+<br>
+&nbsp;&nbsp;&nbsp; ps -cLe<br>
+<br>
+while Spectrum3d is playing; you'll see in the output something like this :<br>
+<br>
+&nbsp;&nbsp;&nbsp; 3119&nbsp; 3119 TS&nbsp;&nbsp; 19 pts/0&nbsp;&nbsp;&nbsp; 00:00:01 spectrum3d<br>
+&nbsp;&nbsp;&nbsp; 3119&nbsp; 3120 TS&nbsp;&nbsp; 19 pts/0&nbsp;&nbsp;&nbsp; 00:00:00 threaded-ml<br>
+&nbsp;&nbsp;&nbsp; 3119&nbsp; 3121 TS&nbsp;&nbsp; 19 pts/0&nbsp;&nbsp;&nbsp; 00:00:00 threaded-ml<br>
+&nbsp;&nbsp;&nbsp; 3119&nbsp; 3123 TS&nbsp;&nbsp; 19 pts/0&nbsp;&nbsp;&nbsp; 00:00:00 task0<br>
+&nbsp;&nbsp;&nbsp; 3119&nbsp; 3124 TS&nbsp;&nbsp; 19 pts/0&nbsp;&nbsp;&nbsp; 00:00:00 spectrum3d<br>
+&nbsp;&nbsp;&nbsp; 3119&nbsp; 3125 RR&nbsp;&nbsp; 90 pts/0&nbsp;&nbsp;&nbsp; 00:00:02 alsasrc:src<br>
+<br>
+<br>
+The thread called "alsasrc:src" is running with the RR policy ('RR' in the 3d column).<br>
+<br>
+<h3>What about Jack?</h3>
+If Jack is run in realtime mode (which has to be configured in Jack),
+all its clients are run in realtime mode also; there is nothing more to
+be done here (If Spectrum3d is run with Jack, Spectrum3d is a cient of
+Jack).<br>
+<br>
+<h2><a name="4._Multitouch_support_for_Spectrum3d"></a>4. Multitouch support for Spectrum3d</h2>
+Multitouch support in Spectrum3d is still experimental for now. It is provided by the uTouch-geis API (Geis2).<br>
+<br>
+<h3>Where to get general information about multitouch?</h3>
+For general information about multitouch in Ubuntu, you can refer to : <a href="https://wiki.ubuntu.com/Multitouch">https://wiki.ubuntu.com/Multitouch</a> .<br>
+<h3>How to install it?</h3>
+It is available from Natty's repositories. For Maverick, it has to be
+installed from the uTouch-geis website(the libutouch-geis-dev in the
+Maverick's repositories is the Geis1 API and we are using Geis2 here).
+A convenient way to do that on Maverick is :<br>
+&nbsp;&nbsp;&nbsp; - first uninstall libutouch-geis-dev&nbsp; and libutouch-geis if you have them installed;<br>
+&nbsp;&nbsp;&nbsp; - type in a terminal : sudo apt-get build-dep
+libutouch-geis-dev&nbsp; (this will get all the needed dependencied to
+build Geis2);<br>
+&nbsp;&nbsp;&nbsp; - then download the source package from uTouch-Geis website (<a href="https://launchpad.net/canonical-multitouch/utouch-geis">https://launchpad.net/canonical-multitouch/utouch-geis</a>)
+and follow the instruction from the INSTALL file; steps should include
+go in the source package directory, then ./configure, make, make
+install. <br>
+&nbsp;&nbsp;&nbsp; - another convenient way to install it 5instead of
+compiling it from sources) is to get the deb packages for Natty from
+the packages.ubuntu.com : install first <a href="http://packages.ubuntu.com/natty/libutouch-geis1">libutouch-geis1</a> then <a href="http://packages.ubuntu.com/natty/libutouch-geis-dev">libutouch-geis-dev</a> .<br>
+<br>
+How is it implemented in Spectrum3d?<br>
+------------------------------------<br>
+For now, the whole screen receives fingers input for Spectrum3d while
+Spectrum3d is running (input is not limited to the Spectrum3d window).
+On the other hand, when Sprectrum3d is running, the mouse pointer
+cannot be used from the touchpoint on the screen, but the mouse pointer
+is still drived by the mouse. This behaviour could be the same in
+Natty, if you have a touchpad that supports multitouch : the touchpad
+only receives input as multitouch gestures, and you cannot use it
+anymore to drive the mouse as long as Spectrum 3d is running. <br>
+<br>
+Only one and two fingers gestures have been implemented untill now
+since most of the touchscreen supports only 2 fingers gestures. On the
+other hand, as gestures can be used at a system wide level, it seems
+that 2 fingers gestures are better application-specific, while 3 or 4
+fingers gestures apply to window or system management.<br>
+<br>
+A possible future alternative : Ginn<br>
+------------------------------------<br>
+If you don't want to use uTouch-geis, it should be possible to use the excellent 'Ginn' software (<a href="https://launchpad.net/canonical-multitouch/ginn">https://launchpad.net/canonical-multitouch/ginn</a>)
+that allows to "inject" gestures without installing the geis API.
+However, since Spectrum3d uses SDL, Ginn cannot yet "inject" gestures
+in such kind of windows, but the developpers are planning to do it.
+When it will be possible, Ginn will have to be started as root.<br>
+<br>
+<h2><a name="5._More_information"></a>5. More information</h2>
+View a <a href="http://www.youtube.com/watch?v=CCVxDNbcqRE">short video demo</a><br><br>
+Or contact me at :<br>
+<br>
+nadaeck (at) hotmail (dot) com<br>
+<br>
+<br>
+
+
+
+</body></html>

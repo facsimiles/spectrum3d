@@ -1,85 +1,76 @@
 SPECTRUM 3D: 3D AUDIO SPECTRUM ANALYSER IN REAL TIME
 
-Spectrum 3D dispays a 3D audio spectrogram in real time; the source can be either the microphone or an audio file or jack (jack-audio-connection-kit). It is build with the Gstreamer, SDL, OpenGl et Gtk free libraries and is under GPL license.
+Spectrum 3D dispays a 3D audio spectrogram in real time; the source can be either the microphone or an audio file or optionally jack (jack-audio-connection-kit). Optionally, it supports multitouch gestures from touscreen and touchpad. Optionally also, Gstreamer input can be run in realtime even if Jack is not used. It is build with the Gstreamer, SDL, OpenGl, Gtk and uTouch-Geis free libraries and is under GPL license.
+
+If you want realtime and multitouch support, you should read the notes at the bottom of the page. A tutorial is provided in the 'Doc' directory as well video tutorials.
 
 *******************
 |  INSTALLATION:  |
 *******************
 
 1. dependencies:
-"""""""""""""""
+""""""""""""""""
+All dependencies are available in the Ubuntu repositories.
 
-For Ubuntu 10.10, you have to install :
+For Ubuntu 10.10 and 11.04 :
 		- gcc, pkg-config;
 		- libgtk+-2.0-dev;
-		- lidsdl1.2-dev, libsdl-ttf2.0-dev;
-		- libgl1-mesa-dev;
+		- lidsdl1.2-dev and libsdl-ttf2.0-dev;
 		- libgstreamer0.10-dev;
-		- libjack-dev (for jack1) or libjack-jackd2-dev for jack2; if you don't use jack, the jackd package is not necessary; you choose either libjack-dev or libjack-jackd2-dev then just to allow the compilation;
-		- gstreamer0.10-plugins-bad (Jack's support is now in the 'plugins-good' but the 'pugins-bad' are still somehow needed to have it working), gstreamer0.10-plugins-ugly et gstreamer0.10-plugins-ugly-multiverse (for reading files such as mp3);
+
+		- gstreamer0.10-plugins-bad, gstreamer0.10-plugins-bad-multiverse, gstreamer0.10-plugins-ugly et gstreamer0.10-plugins-ugly-multiverse (for reading files such as mp3);
+
+	For JACK support : 
+		- libjack-dev (for jack1) or libjack-jackd2-dev for jack2; 
+
+	For multitouch support (touchscreen and also for touchpad in Natty):
+		- libutouch-geis-dev in Natty; in Maverick, you have to install utouch-geis from uTouch website (https://launchpad.net/canonical-multitouch/utouch-geis) since we use here the Geis2 API and Ubuntu maverick provides the Geis1 API in the repositories.
 		
-	Fot the other distributions, the dependencies should be very similar.
+	
+	Fot the other distributions, the dependencies should be very similar. uTouch-Geis is beeing ported in other distributions such as Gentoo or Fedora. More ifo on this in the documentation directory.
 
-2. not necessary for Ubuntu : check the font location :
-""""""""""""""""""""""""""""""""""""""""""""""""""""""" 
+2. compilation and installation : 
+"""""""""""""""""""""""""""""""""
+ 	1) in a terminal, go to the directory where the sources are; for example :
 
-In Ubuntu 10.10, we use the "/usr/share/fonts/truetype/freefont/FreeSans.ttf" for font rendering. I you use another distribution you should adapt this. To do this you have to change manually the path to the font in the sdlWindow.c around the line 462. This will available soon in the preferences. 
+		cd /home/victor/spectrum3d-0.2-2 (if the sources are in the '/home/victor' directory);
 
+	2) type : 
 
-3. compilation : 
-""""""""""""""""
- 	1) go to the directory where the sources are; for example, if the directory containing the source files "spectrum3d-0.2-1" is in '/home/nestor', you'll type in terminal  : cd /home/nestor/spectrum3d-0.2.1 .
+		./configure 
 
-	2) Then copy and paste the following line : 
+	to generate a Makefile; if you want JACK support, add '--enable-jack'; if you want realtime support when you don't use jack, add '--enable-realtime'; if you want multitouch support (for touchscreen or multitouch touchpad), add '--enable-geis'. For example, if you want the 3 options enabled (Jacj support, RealTime without Jack and Multitouch support, you'll have to type :
 
-gcc -o spectrum `pkg-config jack gstreamer-0.10 gtk+-2.0 --libs --cflags` -lSDL -lSDL_ttf -lGL -lGLU  main.c onClick.c sdlWindow.c scale.c display.c text.c
+		./configure --enable-jack --enable-realtime --enable-multitouch
 
-that sould provide an executable binary called 'spectrum' in the directory where are the source; double click on it or run it in terminal. 
+	3) type :
+
+		make
+
+	4) type : 
+
+		sudo make install (the password will be necessary for this)
 
 
 *********
 |  USE  |
 *********
 
-All commands from keyboard and/mice works during playing or paused state.
+Run it from a terminal by typing : 
 
+	spectrum3d
 
-GRAPHICAL INTERFACE :
-"""""""""""""""""""""
+or from the 'Menu->Applications->Sound & Video'
 
-Choce of the audio source : 
----------------------------
-Source can be the microphone, an audio file or jack-audio-connection-kit; file format than can be read is very large since it is provided by Gstreamer. While playing an audio file, ">>" et "<<" allows to seek 5seconds forward or backard in the playing audio file.
+From the graphical interface, you can play/pause or stop playing. For audio files, you can seek forward or backward (5 seconds by 5 seconds); selection of multiple audio files is possible. Audio source can be : microphone, audio file or jack if you have activated this option. You can reset position of the graph, or set it in a 'front view' position, or set it in a preset position that you have chosen and stored. You can change the range of the zoom (from 1000 to 20000 Hz) and the starting value of the zoom (from 0 to 4000 Hz). You can change the speed of display (6 differents speeds). You can choose not to display the line scale and the numeric scale, as well as separating panels whose height can be ajusted. You can also adjust the diplay of the gain. All those commands work in the playing or in the paused state (when image is frozen).
 
-	
-Range of frequencies that can be analysed and displayed :
----------------------------------------------------------
-The range of analysed frequencies go up to 20 000 Hz. The most precise zoom is 1000 Hz; the display can start higher than 0 Hz; for example, you can display from 2000 to 4000 Hz. The maximal precision is 2 Hz. The default display is from 0 to 6000 Hz.
+It is possible to rotate or translate the graph along the X, Y and Z axis, either by keyboard commands, or by mouse (+/- keyboard) commands, or by touch gestures (if you have a touchscreen or a multitouch touchpad, and if you have enabled multitouch support at compilation). All those commands work in the playing state as well as in the paused state.
 
-
-Speed of display :
-------------------
-6 possible speeds.
-
-
-Scale :
--------
-The checkboxes 'Text' et 'Lines' allow the line scale and the numeric scale to appear; the checkbox 'Panels' allows "vertical separating panels" to appear whose height can be adjusted with the 'Panel height' cursor.
-
-
-Temporal display :
-------------------
-The 'Depth' cursor détermines the lenght of the Z axis, which represents the time : at 0, the display is just a snapshot of the actual sound; at 2, you can see the maximum of ancient displays.
-
-
-Display of the amplitude of the signal :
-----------------------------------------
-Adjusted by the 'gain' cursor.
-
+You'll find below a summary of the keyboard, mouse and gestures commands. You can also find a summary of this in the menu, at the 'Help'->'Shortcuts' and 'Gestures Shortcuts' items. From the 'Edit'->'Preferences', you can change several parameters : width of the displaying window (700 to 1200 pixels), interval between 2 sound analyses, the path of the font beeing used, the coordinates of the preset position of the graph. 
 
 KEYBOARD AND MOUSE SHORTCUTS :
 """"""""""""""""""""""""""""""	
-Some commands are ppossible by keyboard or keyborad and mouse combination. Every mouse commands are done with the left click.
+Some commands are possible by keyboard or keyborad and mouse combination. Every mouse commands are done with the left click.
 
 Command			Keyboard		Mouse (+/-keyboard)
 ================================================================================================================================
@@ -87,7 +78,7 @@ Play/pause		Space bar
 Stop			Escape
 Rotate around X axis	Up/dowm			Mouse up/down
 Rotate around Y axis	Right/left		Mouse right/left
-Rotate around Z axis	'c' + Up/dowm		'c' + mouse up/down
+Rotate around Z axis	'c' + Up/down		'c' + mouse up/down
 Translate along X axis	'x' + left/right	'x' + mouse right/left
 Translate along Y axis	'y' + up/down		'y' + mouse up/down
 Translate along Z axis	'z' + up/down		'z' + mouse up/down
@@ -98,6 +89,20 @@ Read small 50 msec
 samples	of a paused
 audio file		'v' + left
 
+GESTURES COMMANDS :
+"""""""""""""""""""	
+Some commands are possible by keyboard or keyborad and mouse combination. Every mouse commands are done with the left click.
+
+Command				Gesture		
+=======================================================================
+Play/pause			Double Tap
+Rotate around X axis		1 finger Drag Up/dowm	
+Rotate around Y axis		1 finger Right/left
+Rotate around Z axis		2 fingers Rotate
+Translate along X axis		2 fingers Right/left
+Translate along Y axis		2 fingers Drag Up/dowm
+Translate along Z axis		2 fingers Pinch
+
 
 *********************
 |  IMPORTANT NOTES  |
@@ -105,7 +110,26 @@ audio file		'v' + left
 
 1. Although it is 3D with OpenGL, the drivers allowing 3D acceleration are not needed, but it can help to have a better rendering.
 
-2. Spectrum 3D can use a lot of CPU, given the real-time analysis and display of the data's. 3 aspects are inportants : the power of the processor, the performance of the graphic card (with or without the 3D drivers) and the type of kernel that is beeing used (a preempt or real-time will have better performance. The amount of work is proportionnal to the width of the window, which is by fefault the smallest (700 pixels) which should suit to many machines; size of the display can then be increased in Menu -> Edit -> Preferences; the maximal width is 1200 pixels, with works better with a more powerfull processor and a good graphic card.
+2. Spectrum 3D can use a lot of ressources on your machine ,given the real-time analysis and the 3D display of the data's. 3 aspects are importants : the power of the processor, the performance of the graphic card (with or without the 3D drivers) and the type of kernel that is beeing used (a preempt or real-time will allow better performance). The amount of needed ressources is proportionnal to the width of the window. If your machine has difficulty, you can use a smaller window size (in Menu -> Edit -> Preferences), wich decreases the needed ressources.
+
+3. RealTime mode will allow Spectrum3d to have priority on other running processes, in order to not be slowed down by them; it won't decrease the amount of CPU and GPU ressources needed to perform the task. IMPORTANT WARNING : If you want to take advantage of this you should edit or create an '/etc/security/limits.d/audio.conf' file and put this inside : 
+
+	@audio   -  rtprio     95
+	@audio   -  memlock    unlimited
+
+then you should add yourself as a member of the 'audio' group :
+
+	- either go in System->Preferences->Users and Groups->Manage Groups, then select the 'audio' groups, click on 'Properties' and add yourself;
+	- or by typing in a terminal : sudo adduser ${LOGNAME} audio 
+
+then reboot.
+
+If you don't do this, you'll have to run Spectrum3d as root.
+You'll find more information in the 'Realtime' file in the Doc directory.
+
+4. Multitouch support is still experimental for now; it is provided by the uTouch-geis API. For now, the whole screen receives fingers input for Spectrum3d while Spectrum3d is running (input is not limited to the Spectrum3d window). On the other hand, when Sprectrum3d is running, the mouse pointer cannot be used from the touchpoint on the screen, but the mouse pointer is still drived by the mouse. This behaviour could be the same in Natty, if you have a touchpad that supports multitouch : the touchpad only receives input as multitouch gestures, and you cannot use it anymore to drive the mouse as long as Spectrum 3d is running. 
+
+You'll find more information in the 'Multitouch' file in the Doc directory.
 
 
 Thank you for telling me whatever you want too and than you for your presence!
