@@ -14,12 +14,10 @@
     along with Spectrum3D.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifdef GEIS
-
 #ifndef DEFINE_GEIS
 #define DEFINE_GEIS
 
-int fd;
+int playing, fd;
 float X, Y, Z; 
 float AngleH, AngleV, AngleZ;
 GeisStatus status;
@@ -27,7 +25,9 @@ Geis geis;
 GeisSubscription subscription;
 void sdlWindow();
 
-int geisGesture();
+int geisGesture(); 
 
 #endif
-#endif
+
+
+

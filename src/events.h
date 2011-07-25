@@ -17,9 +17,11 @@
 #ifndef DEFINE_EVENTS
 #define DEFINE_EVENTS
 
-int zoom;
+int zoom, result;
 float gain, X, Y, Z; 
 float AngleH, AngleV, AngleZ;
+gboolean enableTouch;
+
 void sdlWindow();
 void onStop();
 

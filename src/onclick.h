@@ -17,13 +17,16 @@
 #ifndef DEFINE_ONCLICK
 #define DEFINE_ONCLICK
 
-int playing, pose, typeSource, zoom, stringInt, range, counterNumber, forward, backward, nSec, scale, zoomFactor, textScale, showPanels, lineScale, change, f, onClickWidth, width;
+guint displaySpectroTimeout;
+int playing, pose, typeSource, zoom, stringInt, range, counterNumber, forward, backward, nSec, scale, zoomFactor, textScale, showPanels, lineScale, change, f, onClickWidth, width, intervalTimeout;
 float gain, yPanel, z, X, Y, Z, PROPORTION, AngleH, AngleV, AngleZ, presetX, presetY, presetZ, presetAngleH, presetAngleV, presetAngleZ; 
 
 #define RESIZE width/1200
 
 GMainLoop *loop;
+GstElement *pipeline;
 void sdlWindow(GtkWidget *pWidget, gpointer data);
 void playFromFile(GtkWidget *pWidget, gpointer data);
+void displaySpectro();
 
 #endif

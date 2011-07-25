@@ -17,33 +17,56 @@ the utouch-geis-2.0.10 at https://launchpad.net/canonical-multitouch/utouch-geis
 
 #include "config.h"
 
-#ifdef GEIS
-
+#ifdef HAVE_LIBUTOUCH_GEIS
+ 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <geis/geis.h>
+#include <libbamf/bamf-matcher.h>
 
 #include "geis.h"
+
+char *getCurrentApp()
+{
+	g_type_init();
+	char *windowName;
+   	BamfWindow *window = bamf_matcher_get_active_window (bamf_matcher_get_default());
+	if (window) {
+		windowName = (char *) bamf_view_get_name(BAMF_VIEW(window));
+		return windowName;
+		} 
+	else {
+		printf("Libbamf : Cannot get the window name\n");
+		return "";
+		}	
+}
 
 void setupGeis()
 {
 	printf("Set up Geis\n");
-	GeisFilter filter;
-	
+#ifdef GEIS_12
+	geis = geis_new(GEIS_INIT_TRACK_DEVICES, GEIS_INIT_TRACK_GESTURE_CLASSES, NULL);
+	geis_get_configuration(geis, GEIS_CONFIGURATION_FD, &fd);
+
+	subscription = geis_subscription_new(geis, "example", GEIS_SUBSCRIPTION_CONT);
+#endif
+#ifndef GEIS_12
+	//GeisFilter filter;
 	geis = geis_new(GEIS_INIT_TRACK_DEVICES, NULL);
 	subscription = geis_subscription_new(geis, "example", GEIS_SUBSCRIPTION_CONT);
-	filter = geis_filter_new(geis, "filter");
-
+	/*filter = geis_filter_new(geis, "filter");
+	
 	geis_filter_add_term(filter,
-		       GEIS_FILTER_REGION,
-		       GEIS_GESTURE_ATTRIBUTE_TOUCHES, GEIS_FILTER_OP_LE, 2,
-		       NULL);
-
-	status = geis_subscription_add_filter(subscription, filter);
+			GEIS_FILTER_CLASS,
+                        GEIS_GESTURE_ATTRIBUTE_TOUCHES, GEIS_FILTER_OP_EQ, 2,
+			NULL);
+	
+	status = geis_subscription_add_filter(subscription, filter);*/
 	status = geis_subscription_activate(subscription);
 
 	geis_get_configuration(geis, GEIS_CONFIGURATION_FD, &fd);
+#endif
 }
 
 void geisQuit()
@@ -72,7 +95,7 @@ void processTouchEvent(int drag, int pinch, int rotate, int tap, int touchNumber
 		AngleZ-=angularVelocity * 100;
 		}
 	else if (tap && tapTime > 150) {
-		sdlWindow();
+		playFromSource();
 		}
 }
 
@@ -127,7 +150,7 @@ dump_gesture_event(GeisEvent event)
 	GeisGroupSet groupset;
 	GeisAttr     attr;
 	int drag = 0, pinch = 0, rotate = 0, tap = 0, touchNumber = 0;
-	float velocityX = 0, velocityY, radialVelocity = 0, angularVelocity = 0, tapTime;
+	float velocityX = 0, velocityY = 0, radialVelocity = 0, angularVelocity = 0, tapTime = 0;
 
   attr = geis_event_attr_by_name(event, GEIS_EVENT_ATTRIBUTE_TOUCHSET);
   touchset = geis_attr_value_to_pointer(attr);
@@ -136,14 +159,12 @@ dump_gesture_event(GeisEvent event)
   groupset = geis_attr_value_to_pointer(attr);
 
   //printf("gesture\n");
-  for (i= 0; i < geis_groupset_group_count(groupset); ++i)
-  {
+  for (i= 0; i < geis_groupset_group_count(groupset); ++i) {
     GeisSize j;
     GeisGroup group = geis_groupset_group(groupset, i);
     //printf("+group %u\n", geis_group_id(group));
 
-    for (j=0; j < geis_group_frame_count(group); ++j)
-    {
+    for (j=0; j < geis_group_frame_count(group); ++j) {
       GeisSize k;
       GeisFrame frame = geis_group_frame(group, j);
       GeisSize attr_count = geis_frame_attr_count(frame);
@@ -214,15 +235,42 @@ else {
 	}
 }
 
+#ifdef GEIS_12
+void
+target_subscription(Geis geis, GeisSubscription subscription)
+{
+  GeisStatus status;
+  GeisFilter filter = geis_filter_new(geis, "filter");
+  geis_filter_add_term(filter,
+                       GEIS_FILTER_CLASS,
+                       GEIS_GESTURE_ATTRIBUTE_TOUCHES, GEIS_FILTER_OP_EQ, 2,
+                       NULL);
+
+  status = geis_subscription_add_filter(subscription, filter);
+  if (status != GEIS_STATUS_SUCCESS)
+  {
+    fprintf(stderr, "error adding filter\n");
+  }
+}
+#endif
+
 
 int geisGesture()
 {
+	char *windowName = getCurrentApp();
+	//printf("appName = %s\n", appName);
 	int result = 0;
 	GeisEvent eventGeis;
 	status = geis_dispatch_events(geis);
 	status = geis_next_event(geis, &eventGeis);
 	while (status == GEIS_STATUS_CONTINUE || status == GEIS_STATUS_SUCCESS){
 		switch (geis_event_type(eventGeis)){
+#ifdef GEIS_12
+		case GEIS_EVENT_INIT_COMPLETE:
+		    target_subscription(geis, subscription);
+		    status = geis_subscription_activate(subscription);
+		    break;
+#endif
 		  /*case GEIS_EVENT_DEVICE_AVAILABLE:
 		  case GEIS_EVENT_DEVICE_UNAVAILABLE:
 		    dump_device_event(eventGeis);
@@ -231,7 +279,9 @@ int geisGesture()
 		case GEIS_EVENT_GESTURE_BEGIN:
 		case GEIS_EVENT_GESTURE_UPDATE:
 		case GEIS_EVENT_GESTURE_END:
-		    result = dump_gesture_event(eventGeis);
+			if (strcmp(windowName, PACKAGE_NAME) == 0) {
+		    		result = dump_gesture_event(eventGeis);
+				}
 			break;
 		default:
 		    break;

@@ -26,6 +26,7 @@
 /* Select font */
 void selectFont(GtkWidget *pWidget, gpointer data)
 {
+	GtkFileFilter *filter = gtk_file_filter_new();
 	GtkWidget *pFileSelection;
 	GtkWidget *pParent;
 	pParent = GTK_WIDGET(data);
@@ -37,6 +38,9 @@ void selectFont(GtkWidget *pWidget, gpointer data)
 	GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 	GTK_STOCK_OPEN, GTK_RESPONSE_OK,
 	NULL);
+	gtk_file_filter_set_name(filter, ".ttf Files");
+	gtk_file_filter_add_pattern(filter, "*.ttf");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(pFileSelection), filter);
 	gtk_window_set_modal(GTK_WINDOW(pFileSelection), TRUE);
 
 	switch(gtk_dialog_run(GTK_DIALOG(pFileSelection))) {
@@ -54,12 +58,18 @@ void selectFont(GtkWidget *pWidget, gpointer data)
 /* Preferences window */
 void onPreferences(GtkWidget* widget, gpointer data)
 {
-	GtkWidget *pPreferences;
-    	GtkWidget *pSpinWidth, *pSpinInterval, *pLabel, *pCheckPreset;
-	GtkWidget *pFrame, *pHBox[10], *pButtonSelectFont;
+	GtkWidget *pPreferences, *pNotebook, *pTabLabel;
+    	GtkWidget *pSpinWidth, *pLabel, *pCheckRealtime, *pComboPolicy, *pSpinPriority, *pCheckPreset, *pCheckEnableTouch;
+	GtkWidget *pFrame, *pButtonSelectFont;
 	gboolean bState;
 	int i = 0;
-	for (i = 0; i < 10; i++) {
+	gchar *sTabLabel[3];
+	GtkWidget *pVBox[3];
+	for (i = 0; i < 3; i++) {
+		pVBox[i] = gtk_vbox_new(TRUE, 0);
+		}
+	GtkWidget *pHBox[25];
+	for (i = 0; i < 25; i++) {
 		pHBox[i] = gtk_hbox_new(TRUE, 0);
 		}
 		
@@ -71,12 +81,24 @@ void onPreferences(GtkWidget* widget, gpointer data)
         NULL);
 	gtk_window_set_default_size(GTK_WINDOW(pPreferences), 300, 300);
 
+	pNotebook = gtk_notebook_new();
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pNotebook, TRUE, TRUE, 0);
+	gtk_notebook_set_tab_pos(GTK_NOTEBOOK(pNotebook), GTK_POS_TOP);
+        gtk_notebook_set_scrollable(GTK_NOTEBOOK(pNotebook), TRUE);
+
+///////////////////////// 1st Notebook : "Display" //////////////////////
+	
+        sTabLabel[0] = g_strdup_printf("Display");
+	pTabLabel = gtk_label_new(sTabLabel[0]);
+	gtk_notebook_append_page(GTK_NOTEBOOK(pNotebook), pVBox[0], pTabLabel);
+	g_free(sTabLabel[0]);
+
 	/* SpinButton for choosing the width of the main window */
 	pFrame = gtk_frame_new("Width of the window");
 	pSpinWidth = gtk_spin_button_new_with_range(700, 1200, 50);
-	gtk_container_add(GTK_CONTAINER(pFrame), pSpinWidth);
+	gtk_box_pack_start(GTK_BOX(pVBox[0]), pHBox[0], TRUE, TRUE, 0);	
 	gtk_box_pack_start(GTK_BOX(pHBox[0]), pFrame, TRUE, TRUE, 0);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[0], FALSE, FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(pFrame), pSpinWidth);
 	gtk_spin_button_set_value (GTK_SPIN_BUTTON(pSpinWidth), (float)width); 
 	
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[1], TRUE, FALSE, 0);
@@ -84,70 +106,120 @@ void onPreferences(GtkWidget* widget, gpointer data)
 	/* Button to select the font */
 	pButtonSelectFont = gtk_button_new_with_mnemonic("Select Font"); 
 	gtk_box_pack_start(GTK_BOX(pHBox[2]), pButtonSelectFont, TRUE, TRUE, 0);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[2], FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(pVBox[0]), pHBox[2], FALSE, FALSE, 0);
 	g_signal_connect(G_OBJECT(pButtonSelectFont), "clicked", G_CALLBACK(selectFont), NULL);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[3], TRUE, FALSE, 0);
 
-	/* SpinButton for choosing the speed */
-	pFrame = gtk_frame_new("Interval");
-	pSpinInterval = gtk_spin_button_new_with_range(10, 20, 1);
-	gtk_container_add(GTK_CONTAINER(pFrame), pSpinInterval);
-	gtk_box_pack_start(GTK_BOX(pHBox[4]), pFrame, TRUE, TRUE, 0);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[4], FALSE, FALSE, 0);
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON(pSpinInterval), interval);
-
-	/* Warning label */
-	pLabel=gtk_label_new("Warning : too low interval can cause overload of your system.");
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[5], FALSE, FALSE, 0);
-	gtk_container_add(GTK_CONTAINER(pHBox[5]), pLabel);
-
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[6], TRUE, FALSE, 0);
-
 	/* Check button to save the current position as 'Preset' */
 	pCheckPreset = gtk_check_button_new_with_label("Save current position as preset");
 	gtk_box_pack_start(GTK_BOX(pHBox[7]), pCheckPreset, TRUE, TRUE, 0);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[7], FALSE, FALSE, 0);
-		
+	gtk_box_pack_start(GTK_BOX(pVBox[0]), pHBox[7], FALSE, FALSE, 0);
+
+///////////////////////// 2d Notebook : "Audio" //////////////////////
+	
+	sTabLabel[1] = g_strdup_printf("Audio");
+	pTabLabel = gtk_label_new(sTabLabel[1]);
+	gtk_notebook_append_page(GTK_NOTEBOOK(pNotebook), pVBox[1], pTabLabel);
+	g_free(sTabLabel[1]);
+
+	gtk_box_pack_start(GTK_BOX(pVBox[1]), pHBox[13], FALSE, FALSE, 0);
+	//gtk_box_pack_start(GTK_BOX(pVBox[1]), pHBox[14], FALSE, FALSE, 0);
+
+	/* Realtime */
+	pCheckRealtime = gtk_check_button_new_with_label("Enable realtime \n(without Jack)");
+	gtk_box_pack_start(GTK_BOX(pHBox[15]), pCheckRealtime, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(pVBox[1]), pHBox[15], TRUE, FALSE, 0);
+	//realtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckRealtime));
+	if (realtime) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pCheckRealtime), TRUE);
+		}
+
+	pFrame = gtk_frame_new("Realtime Policy");
+	pComboPolicy = gtk_combo_box_new_text();
+	gtk_container_add(GTK_CONTAINER(pFrame), pComboPolicy);
+	gtk_box_pack_start(GTK_BOX(pHBox[15]), pFrame, TRUE, TRUE, 0);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboPolicy), "SCHED_RR");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboPolicy), "SCHED_FIFO");
+	if (strstr(policyName, "FIFO")){
+		gtk_combo_box_set_active(GTK_COMBO_BOX(pComboPolicy), 1);
+		}
+  	else {
+		gtk_combo_box_set_active(GTK_COMBO_BOX(pComboPolicy), 0);
+		}
+	
+	pFrame = gtk_frame_new("Priority");
+	pSpinPriority = gtk_spin_button_new_with_range(50, 80, 1);
+	gtk_container_add(GTK_CONTAINER(pFrame), pSpinPriority);
+	gtk_box_pack_start(GTK_BOX(pHBox[15]), pFrame, FALSE, FALSE, 0);
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON(pSpinPriority), priority);
+
+#ifdef HAVE_LIBUTOUCH_GEIS
+///////////////////////// 3d Notebook : "Touch" //////////////////////
+	
+	sTabLabel[2] = g_strdup_printf("Touch");
+	pTabLabel = gtk_label_new(sTabLabel[2]);
+	gtk_notebook_append_page(GTK_NOTEBOOK(pNotebook), pVBox[2], pTabLabel);
+	g_free(sTabLabel[2]);
+
+	pCheckEnableTouch = gtk_check_button_new_with_label("Enable Touch");
+	gtk_box_pack_start(GTK_BOX(pHBox[21]), pCheckEnableTouch, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(pVBox[2]), pHBox[21], TRUE, FALSE, 0);
+	//realtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckRealtime));
+	if (enableTouch) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(pCheckEnableTouch), TRUE);
+		}
+#endif
+
+//////////////////////// End of the Notebooks //////////////////////////
+
 	gtk_widget_show_all(GTK_DIALOG(pPreferences)->vbox);
 	
     	switch (gtk_dialog_run(GTK_DIALOG(pPreferences)))
 		{
 		case GTK_RESPONSE_OK:
 	    		width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinWidth));
-			interval = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinInterval));
-			conf = fopen(configFile, "w+");
-			if (conf != NULL) {
-				fprintf(conf, "%d\n", width);
-				fprintf(conf, "%s\n", fontPreference);
-				fprintf(conf, "%d\n", interval);
+			pref = fopen(prefPath, "w+");
+			if (pref != NULL) {
+					fprintf(pref, "%d\n", width);
+					fprintf(pref, "%s\n", fontPreference);
 				bState = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckPreset));
 					if (bState) {
 						presetX = X;
-							fprintf(conf, "%f\n", X);
+							fprintf(pref, "%f\n", X);
 						presetY = Y;
-							fprintf(conf, "%f\n", Y);
+							fprintf(pref, "%f\n", Y);
 						presetZ = Z;
-							fprintf(conf, "%f\n", Z);
+							fprintf(pref, "%f\n", Z);
 						presetAngleH = AngleH;
-							fprintf(conf, "%f\n", AngleH);
+							fprintf(pref, "%f\n", AngleH);
 						presetAngleV = AngleV;
-							fprintf(conf, "%f\n", AngleV);
+							fprintf(pref, "%f\n", AngleV);
 						presetAngleZ = AngleZ;
-							fprintf(conf, "%f\n", AngleZ);
+							fprintf(pref, "%f\n", AngleZ);
 					}
 					else {
-						fprintf(conf, "%f\n", presetX);
-						fprintf(conf, "%f\n", presetY);
-						fprintf(conf, "%f\n", presetZ);
-						fprintf(conf, "%f\n", presetAngleH);
-						fprintf(conf, "%f\n", presetAngleV);
-						fprintf(conf, "%f\n", presetAngleZ);
+						fprintf(pref, "%f\n", presetX);
+						fprintf(pref, "%f\n", presetY);
+						fprintf(pref, "%f\n", presetZ);
+						fprintf(pref, "%f\n", presetAngleH);
+						fprintf(pref, "%f\n", presetAngleV);
+						fprintf(pref, "%f\n", presetAngleZ);
 						}
-				fclose(conf);
+				realtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckRealtime));
+					fprintf(pref, "%d\n", realtime);
+				gchar *string = gtk_combo_box_get_active_text(GTK_COMBO_BOX(pComboPolicy));
+				sprintf(policyName, "%s", string);
+				//printf("policy = %s\n", policyName); 
+					fprintf(pref, "%s\n", policyName);
+				priority = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinPriority));
+					fprintf(pref, "%d\n", priority);
+				enableTouch = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckEnableTouch));
+					fprintf(pref, "%d\n", enableTouch);
+				fclose(pref);
 			    }
 			else {
-				printf("*** WARNING ***  Cannot open configuration file\n");
+				printf("*** WARNING ***  Cannot open preferences file\n");
 				}
 		//printf("Main window's width is %d\n ", width);
 		//printf("Used font is %s\n ", fontPreference);
@@ -249,7 +321,7 @@ void onGesturesShortcuts (GtkWidget* widget, gpointer data)
 	GtkTreeViewColumn *pColumn;
 	GtkCellRenderer *pCellRenderer;
 	gchar *action[8] = {"Play/Pause", "Rotate around X axis                   ", "Rotate around Y axis", "Rotate around Z axis", "Translate along X axis", "Translate along Y axis", "Translate along Z axis"};
-	gchar *keyboard[8] = {"Double Tap", "1 Finger Drag Up/Down", "1 Finger Drag Right/Left", "2 Fingers Rotate", "2 Fingers Drag Right/Left", "2 Fingers Drag Up/Down", "2 Fingers Pinch"};
+	gchar *keyboard[8] = {"Double Tap", "1 Finger Drag Up/Down", "1 Finger Drag Right/Left", "2 Fingers Rotate", "2 Fingers Drag Right/Left", "2 Fingers Drag Up/Down", "2 Fingers Pinch/Spread"};
 	gint i;
 
     	shortcutsWindow = gtk_dialog_new_with_buttons("Keyboard and mouse shortcuts",
@@ -324,5 +396,6 @@ void onAbout(GtkWidget* widget, gpointer data)
     gtk_dialog_run(GTK_DIALOG(pAbout));
     gtk_widget_destroy(pAbout);
 }
+
 
 

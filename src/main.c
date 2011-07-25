@@ -19,20 +19,23 @@
 #include <string.h>
 #include <gtk/gtk.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 #include "config.h"
 
-#ifdef GEIS
+#ifdef HAVE_LIBUTOUCH_GEIS
 	#include <geis/geis.h>
 #endif
 
 #include "main.h"
 
-char *configFile = "/usr/local/etc/spectrum3d.conf";
+char prefPath[100];
 
 /* Quit main window and eveything */
 static void on_window_destroy (GObject * object, gpointer user_data)
 {
+	printf("Quit everything\nGood Bye!\n");
 	if (sFile != NULL){
 		g_free(sFile);
 		}
@@ -44,15 +47,21 @@ static void on_window_destroy (GObject * object, gpointer user_data)
 void getFileName()
 {
 	if (filenames != NULL) {
+		g_print ("Getting the file name from GSList");
 		sFile = (gchar*) filenames->data;
 		g_print ("%s was selected.\n", sFile);
+		}
+	else {
+		g_print ("No file to read - GSList seems to be empty \nYou have to select a file");
 		}
 }
 
  /* Select audio file if "Audio File" Source is choosen" */
 void selectFile(GtkWidget *pWidget, gpointer data) 
 {
+	
 	if (typeSource == 1) {
+		printf("Opening file selection dialog\n");
 		GtkWidget *pFileSelection;
 		GtkWidget *pParent;
 		pParent = GTK_WIDGET(data);
@@ -76,15 +85,158 @@ void selectFile(GtkWidget *pWidget, gpointer data)
 		}
 		gtk_widget_destroy(pFileSelection);
 	}
+	else {
+		printf("Select a file is only possible if source is Audio file\n");
+		}
+}
+
+void compareValues(){
+	int error = 0;
+	printf("Checking values for constistency...");
+	if (width < 700 || width > 1200) {
+		ERROR("width")
+		DEFAULT_VALUES
+		}
+	char *lookforttf = NULL;
+	lookforttf = strstr(fontPreference, ".ttf");
+	if (lookforttf == NULL){
+		printf("Path of the font seems not valid.\n");
+		DEFAULT_VALUES
+		}
+	else if (realtime != 0 && realtime != 1) {
+		ERROR("realtime")
+		DEFAULT_VALUES	
+		} 
+	else if ((strcmp(policyName, "SCHED_RR") != 0) && (strcmp(policyName, "SCHED_FIFO") != 0)){
+		printf("Realtime policy name seems not valid\n");
+		DEFAULT_VALUES
+		}
+	else if (priority < 50 || priority > 80) {
+		ERROR("priority")
+		DEFAULT_VALUES	
+		}
+	else if (enableTouch != 0 && enableTouch != 1) {
+		ERROR("enableTouch")
+		DEFAULT_VALUES	
+		}
+	else {
+		printf(" OK\n");
+		}
+}
+
+void makeDefaultPreferencesFile() {
+	printf("Writing default values in 'preferences' file\n");
+	fprintf(pref, "%d\n", width);
+	fprintf(pref, "%s\n", fontPreference);
+	fprintf(pref, "%f\n", presetX);
+	fprintf(pref, "%f\n", presetY);
+	fprintf(pref, "%f\n", presetZ);
+	fprintf(pref, "%f\n", presetAngleH);
+	fprintf(pref, "%f\n", presetAngleV);
+	fprintf(pref, "%f\n", presetAngleZ);
+	fprintf(pref, "%d\n", realtime);
+	fprintf(pref, "%s\n", policyName);
+	fprintf(pref, "%d\n", priority);
+	fprintf(pref, "%d\n", enableTouch);
+}
+
+void defaultValues(){
+	printf("Setting values to default\n");
+	struct stat fileStat;
+	char fontHomePath[100];
+	sprintf(fontHomePath, "%s/.%s/fonts/FreeSans.ttf", getenv("HOME"), PACKAGE);
+	width = 850;
+	if (stat("/usr/local/share/fonts/FreeSans.ttf", &fileStat) == 0) {
+		sprintf(fontPreference, "/usr/local/share/fonts/FreeSans.ttf");
+		}
+	else if (stat("/usr/share/fonts/FreeSans.ttf", &fileStat) == 0) {
+		sprintf(fontPreference, "/usr/share/fonts/FreeSans.ttf");
+		}
+	else if (stat(fontHomePath, &fileStat) == 0) {
+		sprintf(fontPreference, "%s/.%s/fonts/FreeSans.ttf", getenv("HOME"), PACKAGE);
+		}
+	else {
+		printf("WARNING : font file was not found; please select a '.ttf' font file via 'Menu->Edit->Preferences->Select Font'.\n");
+		errorMessageWindow("WARNING : font file was not found \nPlease select a '.ttf' font file via 'Menu->Edit->Preferences->Select Font'.");
+		sprintf(fontPreference, "null");
+		} 
+	printf("Font path is %s\n", fontPreference);
+	presetX = -0.495833; 
+	presetY = -0.070833;
+	presetZ = -1.050000;
+	presetAngleH = -16.000000;
+	presetAngleV = 10.000000;
+	presetAngleZ = 0.000000;
+	realtime = 0;
+	sprintf(policyName, "SCHED_RR");
+	priority = 50;
+	enableTouch = 1;
+}
+
+void openPreferenceFile(){
+	char confString[105]="";
+	/* Get the saved values from the configuration file */
+	sprintf(prefPath, "%s/.spectrum3d/spectrum3d.pref", getenv("HOME"));
+	pref = fopen(prefPath, "r+"); 
+	if (pref != NULL){
+		printf("Opening the 'preferences' file and getting the saved values\n");
+		char *result = NULL;
+		result = fgets(confString, 6, pref); 
+			width = strtol(confString, NULL, 10);
+		result = fgets(fontPreference, 100, pref);
+			fontPreference[strlen(fontPreference)-1] = 0;
+				printf("Font path is = %s\n", fontPreference);
+		result = fgets(confString, 20, pref); 
+			presetX = strtof(confString, NULL);
+		result = fgets(confString, 20, pref); 
+			presetY = strtof(confString, NULL);
+		result = fgets(confString, 20, pref); 
+			presetZ = strtof(confString, NULL);
+		result = fgets(confString, 20, pref); 
+			presetAngleH = strtof(confString, NULL);
+		result = fgets(confString, 20, pref); 
+			presetAngleV = strtof(confString, NULL);
+		result = fgets(confString, 20, pref); 
+			presetAngleZ = strtof(confString, NULL);
+		result = fgets(confString, 4, pref); 
+			realtime = strtol(confString, NULL, 10);
+				if (realtime){
+					printf("REALTIME mode is enabled : ");
+					}
+		result = fgets(policyName, 15, pref);
+			policyName[strlen(policyName)-1] = 0;
+				if (realtime){
+					printf("Policy = %s, ", policyName);
+					}
+		result = fgets(confString, 6, pref); 
+			priority = strtol(confString, NULL, 10); 
+				if (realtime){
+					printf("priority = %d\n", priority);
+					}
+		result = fgets(confString, 4, pref); 
+			enableTouch = strtol(confString, NULL, 10);
+#ifdef HAVE_LIBUTOUCH_GEIS
+				if (enableTouch){
+					printf("Multitouch is enabled\n");
+					}
+#endif
+		fclose(pref);
+		compareValues();
+		printf(" ");	
+		}
+	else {  
+//If the 'preferences file doesn't exist, create one with default values
+		printf ("WARNING : 'Preferences' file doesn't exist or cannot be open; this is normal if you run Spectrum3d for the first time; \n");
+		DEFAULT_VALUES
+		}
 }
 
 int main(int argc, char *argv[])
 {
-	char confString[20]="";
-
-	typeSource = 0; // all the default values of the analysis or display parameters
+	printf("%s \nPlease report any bug to %s\n", PACKAGE_STRING, PACKAGE_BUGREPORT);	
+	
+	typeSource = 0; 
 	playing = 0;
-	spect_bands = 11025 ;
 	zoom = 0;
 	stringInt = 6000;
 	forward = 0;
@@ -99,72 +251,33 @@ int main(int argc, char *argv[])
 	textScale = 1;
 	lineScale = 1;
 	f = 2;
-	/* Get the saved values from the configuration file */
-	printf("Opening the configuration file\n");
-	conf = fopen(configFile, "r+"); 
-	if (conf != NULL) {
-		fgets(confString, 6, conf); 
-			width = strtol(confString, NULL, 10);
-				//printf("Saved values : width is %d; ", width);
-		fgets(fontPreference, 80, conf);
-			fontPreference[strlen(fontPreference)-1] = 0;
-				//printf("Font is %s; ", fontPreference);
-		fgets(confString, 6, conf); 
-			interval = strtol(confString, NULL, 10);
-				//printf("Interval is %d; ", interval);
-		fgets(confString, 20, conf); 
-			presetX = strtof(confString, NULL);
-		fgets(confString, 20, conf); 
-			presetY = strtof(confString, NULL);
-		fgets(confString, 20, conf); 
-			presetZ = strtof(confString, NULL);
-		fgets(confString, 20, conf); 
-			presetAngleH = strtof(confString, NULL);
-		fgets(confString, 20, conf); 
-			presetAngleV = strtof(confString, NULL);
-		fgets(confString, 20, conf); 
-			presetAngleZ = strtof(confString, NULL);
-				//printf("Preset are : X = %f, Y = %f, Z = %f, AngleH = %f, AngleV = %f, AngleZ = %f\n", presetX, presetY, presetZ, presetAngleH, presetAngleV, presetAngleZ);
-		fclose(conf);
-		}
+	intervalTimeout = 100;
 	
-	else {
-		width = 700;
-		interval = 15;
-		sprintf(fontPreference, "/usr/share/fonts/truetype/freefont/FreeSans.ttf");
-		printf("*** WARNING *** Cannot open configuration file : using default values\n");
-	    }
-		
-	GtkWidget *pVBox[4], *pHBox[10], *pMenuBar, *pMenu, *pMenuItem, *pButton[7], *pButtonSelect, *pRadio[3], *pComboRange, *pComboZoom, *pComboSpeed, *pFrame, *pScaleGain, *pScalePanelHeight, *pCheckTextScale, *pCheckShowPanels, *pCheckLineScale, *pScaleDepth;
+	openPreferenceFile();
+				
+	GtkWidget *pVBox[4], *pHBox[10], *pMenuBar, *pMenu, *pMenuItem, *pButton[7], *pButtonSelect, *pRadio[3], *pComboRange, *pComboZoom, *pComboSpeed, *pSpinSpeed, *pFrame, *pScaleGain, *pCheckTextScale, *pCheckLineScale;
+	int i = 0;
 	
 	gtk_init (&argc, &argv); // create main window, vertical and horizontal boxes
 	mainWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	gtk_widget_set_size_request (mainWindow, 550, 340);
-	gtk_window_set_title(GTK_WINDOW(mainWindow), "Spectrum : Real-Time Spectral Analysis");
+	gtk_widget_set_size_request (mainWindow, 550, 380);
+	gtk_window_set_title(GTK_WINDOW(mainWindow), "Spectrum3d : Real-Time Spectral Analysis");
 	g_signal_connect (G_OBJECT (mainWindow), "destroy", G_CALLBACK (on_window_destroy), NULL);
 
-	pVBox[0] = gtk_vbox_new(TRUE, 0);
-	pVBox[1] = gtk_vbox_new(TRUE, 0);
-	pVBox[2] = gtk_vbox_new(TRUE, 0);
-	pVBox[3] = gtk_vbox_new(TRUE, 0);
-
-	pHBox[0] = gtk_hbox_new(TRUE, 0);
-	pHBox[1] = gtk_hbox_new(TRUE, 0);
-	pHBox[2] = gtk_hbox_new(TRUE, 0);
-	pHBox[3] = gtk_hbox_new(TRUE, 0);
-	pHBox[4] = gtk_hbox_new(TRUE, 0);
-	pHBox[5] = gtk_hbox_new(TRUE, 0);
-	pHBox[6] = gtk_hbox_new(TRUE, 0);
-	pHBox[7] = gtk_hbox_new(TRUE, 0);
-	pHBox[8] = gtk_hbox_new(TRUE, 0);
-	pHBox[9] = gtk_hbox_new(TRUE, 0);
-
+	for (i = 0; i < 4; i++) {
+		pVBox[i] = gtk_vbox_new(TRUE, 0);
+		}
+	for (i = 0; i < 10; i++) {
+		pHBox[i] = gtk_hbox_new(TRUE, 0);
+		}
+	
 	gtk_container_add(GTK_CONTAINER(mainWindow), pVBox[1]); 
 
 	gtk_box_pack_start(GTK_BOX(pVBox[1]), pHBox[0], FALSE, TRUE, 0);
-	pMenuBar = gtk_menu_bar_new();
-	
+		
 /* Menu */
+	pMenuBar = gtk_menu_bar_new();
+
 	pMenu = gtk_menu_new(); // 'Quit' submenu
 	pMenuItem = gtk_menu_item_new_with_label("Quit");
 	gtk_menu_shell_append(GTK_MENU_SHELL(pMenu), pMenuItem);    
@@ -185,7 +298,7 @@ int main(int argc, char *argv[])
 	pMenuItem = gtk_menu_item_new_with_label("Shortcuts"); 
 	g_signal_connect(G_OBJECT(pMenuItem), "activate", G_CALLBACK(onShortcuts), (GtkWidget*) mainWindow);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pMenu), pMenuItem);
-#ifdef GEIS
+#ifdef HAVE_LIBUTOUCH_GEIS
 	pMenuItem = gtk_menu_item_new_with_label("Gestures Shortcuts");
 	g_signal_connect(G_OBJECT(pMenuItem), "activate", G_CALLBACK(onGesturesShortcuts), (GtkWidget*) mainWindow);
 	gtk_menu_shell_append(GTK_MENU_SHELL(pMenu), pMenuItem);
@@ -209,7 +322,7 @@ int main(int argc, char *argv[])
 /* "Play/Pause" button */
 	pButton[0] = gtk_button_new_with_label("Play/Pause");
 	gtk_box_pack_start(GTK_BOX(pHBox[1]), pButton[0], TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(pButton[0]), "clicked", G_CALLBACK(sdlWindow), NULL);
+	g_signal_connect(G_OBJECT(pButton[0]), "clicked", G_CALLBACK(playFromSource), NULL);
 	
 /* "Stop" button */
 	pButton[1] = gtk_button_new_with_label("STOP");
@@ -238,7 +351,7 @@ int main(int argc, char *argv[])
 	pRadio[1] = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (pRadio[0]), "Audio File");
     	gtk_box_pack_start(GTK_BOX (pHBox[8]), pRadio[1], TRUE, FALSE, 0);
 	g_signal_connect(G_OBJECT(pRadio[1]), "toggled", G_CALLBACK(onSource), pRadio[0]);
-#ifdef JACK
+#ifdef HAVE_LIBJACK
     	pRadio[2] = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (pRadio[0]), "Jack");
     	gtk_box_pack_start(GTK_BOX (pHBox[8]), pRadio[2], TRUE, FALSE, 0);
 	g_signal_connect(G_OBJECT(pRadio[0]), "toggled", G_CALLBACK(onSource), pRadio[0]);
@@ -291,20 +404,28 @@ int main(int argc, char *argv[])
 	g_signal_connect( GTK_OBJECT(pComboZoom), "changed", G_CALLBACK( cb_zoom_changed ), NULL );
 
 /* "Speed of display" combo box */
-        pFrame = gtk_frame_new("Speed of display");
+        pFrame = gtk_frame_new("Interval before \nnew frame (msec)");
 	pComboSpeed = gtk_combo_box_new_text();
 	gtk_container_add(GTK_CONTAINER(pFrame), pComboSpeed);
 	gtk_box_pack_start(GTK_BOX(pHBox[4]), pFrame, TRUE, TRUE, 0);
-	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "Speed 1 (fastest)");
-	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "Speed 2");
-	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "Speed 3");
-	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "Speed 4");
-	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "Speed 5");
-	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "Speed 6 (slowest)");
+	//gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "50");
+	//gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "60");
+	//gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "70");
+	//gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "80");
+	//gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "90");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "100");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "150");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "200");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "250");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "300");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "350");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "400");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "450");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(pComboSpeed), "500");
 	gtk_combo_box_set_active(GTK_COMBO_BOX(pComboSpeed), 1);
 	g_signal_connect( G_OBJECT(pComboSpeed), "changed", G_CALLBACK( cb_speed_changed ), NULL );
-
-/* 'Text', 'Lines' and 'Panels' check boxes */
+	
+/* 'Text' and 'Lines' */
 	gtk_box_pack_start(GTK_BOX(pVBox[1]), pHBox[5], TRUE, TRUE, 0);
 	pCheckTextScale = gtk_check_button_new_with_label("Text");
 	gtk_box_pack_start(GTK_BOX(pHBox[5]), pCheckTextScale, FALSE, FALSE, 0);
@@ -316,18 +437,7 @@ int main(int argc, char *argv[])
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(pCheckLineScale), TRUE);
 	g_signal_connect(G_OBJECT(pCheckLineScale), "toggled", G_CALLBACK(onCheckLineScale), NULL);
 
-	pCheckShowPanels = gtk_check_button_new_with_label("Panels");
-	gtk_box_pack_start(GTK_BOX(pHBox[5]), pCheckShowPanels, FALSE, FALSE, 0);
-	g_signal_connect(G_OBJECT(pCheckShowPanels), "toggled", G_CALLBACK(onCheckShowPanels), NULL);
-
-/* 'Panel height' and 'Depth' Gtk Scale */
-	pFrame = gtk_frame_new("Panel Height");
-	pScalePanelHeight = gtk_hscale_new_with_range(0, 0.6, 0.01);
-	gtk_container_add(GTK_CONTAINER(pFrame), pScalePanelHeight);
-	gtk_box_pack_start(GTK_BOX(pHBox[5]), pFrame, FALSE, TRUE, 0);
-	gtk_range_set_value(GTK_RANGE(pScalePanelHeight), 0.4);
-	g_signal_connect(G_OBJECT(pScalePanelHeight), "value-changed", G_CALLBACK(changeyPanel), NULL);
-
+/* 'Depth' Gtk Scale */
 	pFrame = gtk_frame_new("Depth");
 	pScaleDepth = gtk_hscale_new_with_range(0, 2, 0.1);
 	gtk_container_add(GTK_CONTAINER(pFrame), pScaleDepth);

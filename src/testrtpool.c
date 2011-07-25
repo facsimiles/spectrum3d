@@ -19,9 +19,8 @@ at http://cgit.freedesktop.org/gstreamer/gstreamer/tree/tests/examples/streams
 
 #include "config.h"
 
-#ifdef REALTIME
-
 #include <pthread.h>
+#include <string.h>
 
 #include "testrtpool.h"
 
@@ -63,11 +62,17 @@ default_push (GstTaskPool * pool, GstTaskPoolFunction func, gpointer data,
 
   //g_message ("set policy");
   pthread_attr_init (&attr);
-  if ((res = pthread_attr_setschedpolicy (&attr, SCHED_RR)) != 0)
-    g_warning ("setschedpolicy: failure: %p", g_strerror (res));
+  if (strstr(policyName, "FIFO")){
+	if ((res = pthread_attr_setschedpolicy (&attr, SCHED_RR)) != 0)
+	g_warning ("setschedpolicy: failure: %p", g_strerror (res));
+	}
+  else {
+	if ((res = pthread_attr_setschedpolicy (&attr, SCHED_FIFO)) != 0)
+	g_warning ("setschedpolicy: failure: %p", g_strerror (res));
+	}
 
   //g_message ("set prio");
-  param.sched_priority = 50;
+  param.sched_priority = priority;
   if ((res = pthread_attr_setschedparam (&attr, &param)) != 0)
     g_warning ("setschedparam: failure: %p", g_strerror (res));
 
@@ -79,7 +84,7 @@ default_push (GstTaskPool * pool, GstTaskPoolFunction func, gpointer data,
   res = pthread_create (&tid->thread, &attr, (void *(*)(void *)) func, data);
 	
   if (res == 0) {
-	printf("REALTIME mode (SCHED_RR, p = 50)\n");
+	printf("REALTIME mode (%s, p = %d)\n", policyName, priority);
 	}
   else if (res != 0) {
     g_set_error (error, G_THREAD_ERROR, G_THREAD_ERROR_AGAIN,
@@ -140,7 +145,6 @@ test_rt_pool_new (void)
   return pool;
 }
 
-#endif
 
 
 

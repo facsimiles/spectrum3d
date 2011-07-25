@@ -17,11 +17,13 @@
 #ifndef DEFINE_MENU
 #define DEFINE_MENU
 
-char fontPreference[100], *configFile;
-int width, interval;
+char fontPreference[100], prefPath[100];
+char policyName[20];
+int width, priority;
+gboolean realtime, enableTouch;
 float X, Y, Z, AngleH, AngleV, AngleZ, presetX, presetY, presetZ, presetAngleH, presetAngleV, presetAngleZ; 
 static GtkWidget *mainWindow;
-FILE* conf;
+FILE* pref;
 
 enum {
     ACTION_COLUMN,

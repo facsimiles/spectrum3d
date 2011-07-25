@@ -24,26 +24,22 @@
 
 #include "config.h"
 
-#ifdef GEIS
-	#include <errno.h>
-	#include <geis/geis.h>
-	#include <sys/select.h>
-#endif
-
 #include "events.h"
 
+int counter;
+
 /* Detect keyboard and mouse events in the SDL window */
-int sdlEvent()
+gboolean sdlEvent()
 {
 	Uint8* keys;
 	SDL_Event event;
 	int MouseX,MouseY;
-	int result = 0;
+	//int result = 0;
  	
-#ifdef GEIS
-		
+#ifdef HAVE_LIBUTOUCH_GEIS
+if (enableTouch){
 	result = geisGesture();	
-		
+	}		
 #endif
 	//SDL_EnableKeyRepeat(10, 10);
 	
@@ -109,7 +105,7 @@ int sdlEvent()
 			AngleH-=0.4;
 			}
 		else if ( keys[SDLK_SPACE] ) {
-			sdlWindow();
+			playFromSource();
 			}
 		else if ( keys[SDLK_p] ) {
 			Z-=0.004;
@@ -175,7 +171,8 @@ if ( keys[SDLK_c] || keys[SDLK_g] || keys[SDLK_s] || keys[SDLK_x] || keys[SDLK_y
 			break;
 			}
 
-return result;
+//return result;
+return TRUE;
 }
 
 

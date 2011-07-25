@@ -34,10 +34,16 @@ float i = 0, l = 0, q = 0;
 void setupSDL()
 {
 	printf("Init SDL\n");
-	TTF_Init();
-	SDL_Init(SDL_INIT_VIDEO);
+	if(TTF_Init()==-1) {
+		printf("TTF_Init: %s\n", TTF_GetError());
+		exit(2);
+		}
+	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+		fprintf(stderr, "Unable to init SDL: %s\n", SDL_GetError());
+		exit(1);
+		}
 	SDL_SetVideoMode(WIDTH_WINDOW, HEIGHT_WINDOW, 24, SDL_OPENGL | SDL_GL_DOUBLEBUFFER);
-	SDL_WM_SetCaption("Spectrum : Real-Time Spectral Analysis",NULL);
+	SDL_WM_SetCaption(PACKAGE_NAME, NULL);
 	//font = TTF_OpenFont("/usr/share/fonts/truetype/freefont/FreeSans.ttf", 16 * RESIZE);
 	font = TTF_OpenFont(fontPreference, 16 * RESIZE);
 }
@@ -62,8 +68,8 @@ void setupOpengl() {
 }
 
 /* Draw the spectrogram while playing */
-void displaySpectro()
-{
+gboolean displaySpectro(){
+
 glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); 
 glLoadIdentity();
 
@@ -149,13 +155,17 @@ if (textScale == 1) {
 	RenderText();
 	}
 SDL_GL_SwapBuffers();
+if (pose == 0) {
+	return TRUE;
+	}
+else {
+	return FALSE;
+	}
 }
 
 /* Draw the spectrogram while paused (image is frozen) */
 gboolean displayPausedSpectro()
 {
-	int result = sdlEvent();
-
 if (result != 0 || change) {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); 
 	glLoadIdentity();

@@ -18,15 +18,20 @@
 #define DEF_MAINWINDOW
 
 char *sFile;
+gchar *uri, file[200];
 GSList *filenames;
+guint displaySpectroTimeout;
 gint64 pos;
-int AUDIOFREQ, interval, pose, spect_bands, playing, typeSource, zoom, stringInt, range, counter, counterNumber, forward, backward, nSec, scale, firstPass3D, zoomFactor, textScale, showPanels, lineScale, change, f, onClickWidth, width;
+int AUDIOFREQ, pose, spect_bands, playing, typeSource, zoom, stringInt, range, counterNumber, forward, backward, nSec, scale, firstPass3D, zoomFactor, textScale, showPanels, lineScale, change, f, onClickWidth, width, intervalTimeout;
+gboolean realtime;
 float z, X, Y, Z, PROPORTION; 
 GLfloat x;
+GLfloat prec[205][10005];
 GstElement *pipeline;
 GMainLoop *loop;
 const GValue *magnitudes;
-GLfloat prec[205][10005];
+
+GtkWidget *pScaleDepth;
 
 #define RESIZE width/1200
 GstElement *pipeline;
@@ -35,15 +40,19 @@ int displayPausedSpectro();
 gboolean playSlowly();
 void getFileName();
 void displaySpectro();
-int sdlEvent();
+gboolean sdlEvent();
 void setupSDL();
 void setupOpengl();
 void setupGeis();
 void sdlQuit();
 void geisQuit();
 void playFromJack();
+void errorMessageWindow(char *message);
 gboolean message_handler (GstBus * bus, GstMessage * message, gpointer data);
 GstTaskPool *
-test_rt_pool_new (void);
+test_rt_pool_new ();
 
 #endif
+
+
+

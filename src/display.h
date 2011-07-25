@@ -17,7 +17,7 @@
 #ifndef DEFINE_DISPLAY
 #define DEFINE_DISPLAY
 
-int pose, firstPass3D, zoom, zoomFactor, textScale, lineScale, width, f, change;
+int pose, firstPass3D, zoom, zoomFactor, textScale, lineScale, width, f, change, result;
 float gain, z, X, Y, Z; 
 float AngleH, AngleV, AngleZ;
 GLfloat x;

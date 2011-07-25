@@ -1,4 +1,4 @@
-/* This file is part of Spectrum3D. It comes from the rtpool-test.c from Gstreamer 
+/* This file is part of Spectrum3D. It comes from the rtpool-test.h from Gstreamer 
 at http://cgit.freedesktop.org/gstreamer/gstreamer/tree/tests/examples/streams 
 (Copyright (C) 2009 Wim Taymans <wim.taymans@gmail.com>)
 
@@ -20,6 +20,9 @@ at http://cgit.freedesktop.org/gstreamer/gstreamer/tree/tests/examples/streams
 #define __TEST_RT_POOL_H__
 
 #include <gst/gst.h>
+
+const gchar policyName[20];
+int priority;
 
 G_BEGIN_DECLS
 

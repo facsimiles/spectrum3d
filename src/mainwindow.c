@@ -26,21 +26,21 @@
 
 #include "config.h"
 
-#ifdef JACK
+#ifdef HAVE_LIBJACK
 	#include <jack/jack.h>
 #endif
 
 #include "mainwindow.h"
 
+int spect_bands = 11025, counter = 0;
 const GValue *magni;
 GstElement *audio;
 gint64 pos;
 
-#ifdef JACK
+#ifdef HAVE_LIBJACK
 	static GtkWidget *mainWindow;
 #endif
 
-#ifdef REALTIME
 static GstTaskPool *pool;
 
 static GstBusSyncReply
@@ -108,15 +108,12 @@ sync_bus_handler (GstBus * bus, GstMessage * message, GstElement * bin)
   /* pass all messages on the async queue */
   return GST_BUS_PASS;
 }
-#endif
-
 
 /* Gstreamer message handler */
 gboolean message_handler (GstBus * bus, GstMessage * message, gpointer data)
 {	
 	counter = counter +1;
 	int ii = 0;
-	sdlEvent();
 			
         if (message->type == GST_MESSAGE_ELEMENT && counter > counterNumber) {
 		counter = 0;
@@ -155,7 +152,12 @@ gboolean playSlowly()
 			SDL_Delay(50);
 			gst_element_set_state (pipeline, GST_STATE_PAUSED);
 			}
-return TRUE;
+if (pose == 0) {
+	return FALSE;
+	}
+else {
+	return TRUE;
+	}
 }
 
 /* Print the total duration and the time position in a terminal when playing an audio file */
@@ -188,22 +190,83 @@ if (forward == 1 || backward == 1)
 return TRUE;
 }
 
-void playFromMic(GtkWidget *pWidget, gpointer data)
+int checkJackActive(){
+	printf("*** Checking if JACK is running (Jack error messages are normal):\n");
+	jack_client_t *src_client;
+	jack_status_t status;
+	src_client = jack_client_open ("src_client", JackNoStartServer, &status); 
+	if (src_client != NULL) {
+		printf("JACK seems to be running. Please stop JACK and start playing again\n");
+		return 1;
+		}
+	else if (src_client == NULL) {
+		printf("*** --> OK, JACK is not running\n");
+		return 0;
+		}
+}
+
+getFileUri(){
+	sprintf(file, "file://%s", sFile); 
+	uri = g_strdup (file);
+	}
+
+void playFromSource(GtkWidget *pWidget, gpointer data)
 {
-	int AUDIOFREQ = 44100;
-	GstElement *alsasrc, *audioconvert, *spectrum, *alsasink;
-#ifdef REALTIME
-	GstBus *bus;
+	guint displayPausedSpectroTimeout; 
+	guint64 interval = 200000000;
+if (playing == 1)
+    	{
+		if (pose == 0) {
+		        pose = 1;
+			gst_element_set_state (pipeline, GST_STATE_PAUSED);
+			displayPausedSpectroTimeout = g_timeout_add (80, (GSourceFunc) displayPausedSpectro, pipeline);
+			if (typeSource == 1) {
+				g_timeout_add (80, (GSourceFunc) playSlowly, pipeline);
+				}
+			}
+		 else {
+		        pose = 0;
+			displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
+			gst_element_set_state (pipeline, GST_STATE_PLAYING);
+		        }
+    	}
+
+/* Play */
+else if (playing == 0) {
+	PROPORTION = (width-200);
+	PROPORTION = (float)width / 1000;
+	x = 1.2 * RESIZE;
+	//z = PROPORTION;
+	changeDepth(pScaleDepth, NULL);
+	X = -0.7 * RESIZE;
+	Y = -0.1 * RESIZE;
+	Z = -1.05;
+	
+/* init everything */
+	setupSDL();	
+	setupOpengl();
+#ifdef HAVE_LIBUTOUCH_GEIS
+	setupGeis();
 #endif
-	GstBus *busMH;
+
+	int AUDIOFREQ = 44100;
+	guint timeoutEvent, timeoutPrintPosition, timeoutSeekToTime;
+	GstElement *alsasrc, *audioconvert, *spectrum, *alsasink, *playbin, *conv, *sink, *scaletempo;
+	GstBus *bus, *busMH, *busrt;
 	GstStateChangeReturn ret;
 	GstCaps *caps;
+	GstPad *audiopad;
 
-  	gst_init (NULL, NULL);
-
-#ifdef REALTIME
+/* SOURCE IS MICROPHONE */
+if (typeSource == 0) {
+	gst_init (NULL, NULL);
+	int jackActive = checkJackActive();
+    if (jackActive){
+		errorMessageWindowJack("JACK seems to be running\nStop JACK server and start playing again");
+		}
+    else {
   	pool = test_rt_pool_new ();
-#endif
+
 	loop = g_main_loop_new(NULL, FALSE);
 	playing = 1;
   
@@ -218,7 +281,7 @@ void playFromMic(GtkWidget *pWidget, gpointer data)
 	g_assert (audioconvert);
 	spectrum = gst_element_factory_make ("spectrum", "spectrum");
 	g_assert (spectrum);	
-	g_object_set (G_OBJECT (spectrum), "bands", spect_bands, "threshold", -80, "interval", (interval * 10000000), NULL);
+	g_object_set (G_OBJECT (spectrum), "bands", spect_bands, "threshold", -80, "interval", interval, NULL);
 
 	alsasink = gst_element_factory_make ("fakesink", "alsasink");
 	g_assert (alsasink);
@@ -234,54 +297,48 @@ void playFromMic(GtkWidget *pWidget, gpointer data)
 	    fprintf (stderr, "can't link elements\n");
 		exit (1);
 	    }
-#ifdef REALTIME
+if (realtime) {
 	bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
 	gst_bus_set_sync_handler (bus, (GstBusSyncHandler) sync_bus_handler, pipeline);
 	gst_object_unref (bus);
-#endif
+	}
+
+	timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
+	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 	ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
 	if (ret == GST_STATE_CHANGE_FAILURE){
 		g_print ("Failed to start up pipeline!\n");
 		}
 	busMH = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
 	gst_bus_add_watch(busMH, message_handler, NULL);
-	gst_object_unref(busMH);
 	printf ("Now playing\n");
 	g_main_loop_run (loop);
-
+	g_source_remove(timeoutEvent);
+	g_source_remove(displaySpectroTimeout);
 	gst_element_set_state (pipeline, GST_STATE_NULL);
 	
 	gst_object_unref (busMH);
 	sdlQuit();
-#ifdef GEIS
+#ifdef HAVE_LIBUTOUCH_GEIS
 	geisQuit();
 #endif
-}
+	}
+    }
 
-void playFromFile(GtkWidget *pWidget, gpointer data)
-{
-	int AUDIOFREQ = 44100;
-	GstElement *playbin, *conv, *spectrum, *sink;
-	GstBus *bus;
-#ifdef REALTIME
-	GstBus *busrt;
-#endif
-	GstCaps *caps;
-	GstPad *audiopad;
-	//GstStateChangeReturn ret;
-
+/* SOURCE IS AUDIO FILE */
+else if (typeSource == 1) {
 	gst_init (NULL, NULL);
-
-#ifdef REALTIME
+	int jackActive = checkJackActive();
+    if (jackActive){
+		errorMessageWindowJack("JACK seems to be running\nStop JACK server and start playing again");
+		}
+    else {
 	pool = test_rt_pool_new ();
-#endif
+
 	loop = g_main_loop_new(NULL, FALSE);
 	playing = 1;
 while (filenames != NULL) {
-	gchar file[200]; 
-	sprintf(file, "file://%s", sFile); 
-	gchar *uri;  
-	uri = g_strdup (file);
+	getFileUri();
             
 	pipeline = gst_bin_new ("pipeline");
 	playbin = gst_element_factory_make ("playbin2", "source");
@@ -290,9 +347,12 @@ while (filenames != NULL) {
 	spectrum = gst_element_factory_make ("spectrum", "spectrum");
 	g_assert (spectrum);
 	g_object_set (G_OBJECT (spectrum), "bands", spect_bands, "threshold", -80,
-	    "message", TRUE, "interval", (interval * 10000000), NULL);
+	    "message", TRUE, "interval", interval, NULL);
 	conv = gst_element_factory_make ("audioconvert", "aconv");
 	g_assert (conv);
+	scaletempo = gst_element_factory_make ("scaletempo", "scaletempo");
+	g_assert (scaletempo);
+	g_object_set (G_OBJECT (scaletempo), "overlap", 0.3, "search", 15, "stride", 40, NULL);
 	sink = gst_element_factory_make("autoaudiosink", "sink");
 	g_assert(sink);
 	gst_bin_add_many (GST_BIN (pipeline), conv, spectrum, sink, NULL);
@@ -312,35 +372,41 @@ while (filenames != NULL) {
 	bus = gst_pipeline_get_bus (GST_PIPELINE (playbin));
 	gst_bus_add_watch (bus, message_handler, NULL);
 	gst_object_unref (bus);
-#ifdef REALTIME
+if (realtime) {
 	busrt = gst_pipeline_get_bus (GST_PIPELINE (playbin));
   	gst_bus_set_sync_handler (busrt, (GstBusSyncHandler) sync_bus_handler, playbin);
 	gst_object_unref (busrt);
-#endif
-	g_timeout_add (200, (GSourceFunc) cb_print_position, pipeline);
+	}
+
+	timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
+	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
+	timeoutPrintPosition = g_timeout_add (200, (GSourceFunc) cb_print_position, pipeline);
 	gst_element_set_state (playbin, GST_STATE_PLAYING);
-	g_timeout_add (101, (GSourceFunc) seek_to_time, pipeline);
+	timeoutSeekToTime = g_timeout_add (101, (GSourceFunc) seek_to_time, pipeline);
 	printf ("Now playing\n");
 	g_main_loop_run (loop);
+	g_source_remove(timeoutEvent);
+	g_source_remove(displaySpectroTimeout);
+	g_source_remove(timeoutPrintPosition);
+	g_source_remove(timeoutSeekToTime);
 	gst_element_set_state (playbin, GST_STATE_NULL);
 	gst_object_unref (GST_OBJECT (pipeline));
 	filenames = filenames->next;
 	getFileName();
 	}
 	sdlQuit();
-#ifdef GEIS
+#ifdef HAVE_LIBUTOUCH_GEIS
 	geisQuit();
 #endif
-}
+	}
+    }
 
-#ifdef JACK
-void playFromJack(GtkWidget *pWidget, gpointer data)  
-{
-	int interval = 100000000;
+/* SOURCE IS JACK */
+#ifdef HAVE_LIBJACK
+else if (typeSource == 2){
 	GstElement *src, *spectrum, *sink;
 	GstBus *bus;
-	//GstStateChangeReturn ret;
-
+	
 	gst_init (NULL, NULL);
 	loop = g_main_loop_new(NULL, FALSE);
 	playing = 1;
@@ -394,88 +460,25 @@ void playFromJack(GtkWidget *pWidget, gpointer data)
 		fprintf (stderr, "can't link elements\n");
 		exit (1);
 		}
+	timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
+	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
 	printf ("Now playing\n");
 	g_main_loop_run (loop);
+	g_source_remove(timeoutEvent);
+	g_source_remove(displaySpectroTimeout);
 	gst_element_set_state (pipeline, GST_STATE_NULL);
 	gst_object_unref(pipeline);
 
 	sdlQuit();
-#ifdef GEIS
+#ifdef HAVE_LIBUTOUCH_GEIS
 	geisQuit();
 #endif
-}
-#endif
-
-/* This is the main function where gstreamer handles the audio stream, either from the microphone (typeSource == 0), or from an audio file (typeSource == 1), or from jack (typeSource == 2) */
-void sdlWindow(GtkWidget *pWidget, gpointer data)
-{
-	if (playing == 1)
-    	{
-		if (pose == 0) {
-		        pose = 1;
-			gst_element_set_state (pipeline, GST_STATE_PAUSED);
-			g_timeout_add (80, (GSourceFunc) displayPausedSpectro, pipeline);
-			if (typeSource == 1) {
-				g_timeout_add (80, (GSourceFunc) playSlowly, pipeline);
-				}
-			}
-		 else {
-		        pose = 0;
-			gst_element_set_state (pipeline, GST_STATE_PLAYING);
-		        }
-    	}
-
-/* Play */
-       else if (playing == 0)
-	{
-	PROPORTION = (width-200);
-	PROPORTION = (float)width / 1000;
-	x = 1.2 * RESIZE;
-	z = PROPORTION;
-	X = -0.7 * RESIZE;
-	Y = -0.1 * RESIZE;
-	Z = -1.05;
-	
-/* init everything */
-	setupSDL();	
-	
-	setupOpengl();
-
-#ifdef GEIS
-	setupGeis();
-#endif
-	
-/* print the audio source */
-if (typeSource == 0){
-	printf ("Source is Microphone.\n");
-	}
-else if (typeSource == 1){
-	printf ("Source is Audio File.\n");
-	}
-else if (typeSource == 2){
-	printf ("Source is Jack.\n");
-	}
-
-/* play */
-
-if (typeSource == 0) {
-playFromMic(pWidget, NULL);
-	}
-
-else if (typeSource == 1) {
-playFromFile(pWidget, NULL);
-	}
-
-#ifdef JACK
-else if (typeSource == 2) {
-playFromJack(pWidget, NULL);
 	}
 #endif
-
-printf("Stop playing\n");
+}
 
 }
-}
+
 
 

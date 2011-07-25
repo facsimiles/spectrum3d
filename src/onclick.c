@@ -25,10 +25,7 @@
 
 #include "onclick.h"
 
-void onPlay(GtkWidget *pWidget, gpointer data)
-{
-	sdlWindow(pWidget, NULL);
-}
+static GtkWidget *mainWindow;
 
 /* Get the type of source (microphone, audio file or jack) */
 void onSource(GtkWidget *pBtn, gpointer data)
@@ -65,33 +62,45 @@ void onSource(GtkWidget *pBtn, gpointer data)
 void onReset()
 {
 	X = -0.7 * RESIZE;
-	Y = -0.1 * RESIZE;
+	Y = -0.1;
 	Z = -1.05;
 	AngleH = -16.0;
 	AngleV = 10.0;
 	AngleZ = 0;
+
+	if (pose == 1) {
+		change = 1;
+		}
 }
 
 /* Front position */
 void onFrontView()
 {
 	X = -0.64 * RESIZE;
-	Y = -0.36 * RESIZE;
+	Y = -0.30;
 	Z = -0.95;
 	AngleH = 0;
 	AngleV = 0;
 	AngleZ = 0;
+
+	if (pose == 1) {
+		change = 1;
+		}
 }
 
 /* Preset */
 void onPreset()
 {
-	X = presetX;
+	X = presetX ;
 	Y = presetY;
 	Z = presetZ;
 	AngleH = presetAngleH;
 	AngleV = presetAngleV;
 	AngleZ = presetAngleZ;
+
+	if (pose == 1) {
+		change = 1;
+		}
 }
 
 /* stop playing audio and displaying SDL surface */
@@ -148,29 +157,33 @@ void cb_range_changed(GtkWidget *combo, gpointer data)
 /* Change the speed of display */
 void cb_speed_changed(GtkComboBox *combo, gpointer data)
 {
-	gint index = gtk_combo_box_get_active( combo );
-	counterNumber = index;
+	gchar *string = gtk_combo_box_get_active_text(GTK_COMBO_BOX(combo));
+	intervalTimeout = strtol(string, NULL, 10);
+	if (playing){
+		g_source_remove(displaySpectroTimeout);	
+		displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
+		}
 }
 
 /* Seek 5 sec forward in audio file while playing */
 void timeForward() 
 {
-forward = 1;
-nSec = 5;
+	forward = 1;
+	nSec = 5;
 }
 
 /* Seek 5 sec backward in audio file while playing */
 void timeBackward() 
 {
-backward = 1;
-nSec = -5;
+	backward = 1;
+	nSec = -5;
 }
 
 /* Stop seeking (when "Seek" button is released) */
 void stopSeek() 
 {
-forward = 0;
-backward = 0;
+	forward = 0;
+	backward = 0;
 }
 
 /* Change scale */
@@ -224,41 +237,12 @@ void onCheckTextScale(GtkWidget *pToggle, gpointer data)
 		}
 }
 
-/* Enable panels */
-void onCheckShowPanels(GtkWidget *pToggle, gpointer data)
-{
-	gboolean bState;
-	bState = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pToggle));
-	if (bState) {
-		showPanels = 1;
-	}
-	else {
-		showPanels = 0;
-		}
-	
-	if (pose == 1) {
-		change = 1;
-		}
-}
-
 /* Enable gain change */
 void changeGain(GtkWidget *pWidget, gpointer data)
 {
 	gfloat iValue;
 	iValue = gtk_range_get_value(GTK_RANGE(pWidget));
 	gain = iValue;
-
-	if (pose == 1) {
-		change = 1;
-		}
-}
-
-/* Enable panel height change */
-void changeyPanel(GtkWidget *pWidget, gpointer data)
-{
-	gfloat iValue;
-	iValue = gtk_range_get_value(GTK_RANGE(pWidget));
-	yPanel = iValue;
 
 	if (pose == 1) {
 		change = 1;
@@ -282,6 +266,36 @@ void changeWidth(GtkSpinButton *spinButton, gpointer user_data)
 {
 	onClickWidth = gtk_spin_button_get_value_as_int(spinButton);	
 }
+
+void errorMessageWindowJack(char *message){
+	GtkWidget *pAbout;
+	pAbout = gtk_message_dialog_new (GTK_WINDOW(mainWindow),
+		GTK_DIALOG_MODAL,
+		GTK_MESSAGE_WARNING,
+		GTK_BUTTONS_OK,
+		"%s", message);
+	gtk_dialog_run(GTK_DIALOG(pAbout));
+     	gtk_widget_destroy(pAbout);
+	sdlQuit();
+#ifdef HAVE_LIBUTOUCH_GEIS
+	geisQuit();
+#endif
+	playing = 0;
+}
+
+
+void errorMessageWindow(char *message){
+	GtkWidget *pAbout;
+	pAbout = gtk_message_dialog_new (GTK_WINDOW(mainWindow),
+		GTK_DIALOG_MODAL,
+		GTK_MESSAGE_WARNING,
+		GTK_BUTTONS_OK,
+		"%s", message);
+	gtk_dialog_run(GTK_DIALOG(pAbout));
+     	gtk_widget_destroy(pAbout);
+}
+
+
 
 
 
