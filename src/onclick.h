@@ -17,16 +17,33 @@
 #ifndef DEFINE_ONCLICK
 #define DEFINE_ONCLICK
 
+gboolean flatView, changeViewParameter, pointer;
 guint displaySpectroTimeout;
-int playing, pose, typeSource, zoom, stringInt, range, counterNumber, forward, backward, nSec, scale, zoomFactor, textScale, showPanels, lineScale, change, f, onClickWidth, width, intervalTimeout;
-float gain, yPanel, z, X, Y, Z, PROPORTION, AngleH, AngleV, AngleZ, presetX, presetY, presetZ, presetAngleH, presetAngleV, presetAngleZ; 
+int AUDIOFREQ, playing, pose, zoom, forward, backward, nSec, scale, zoomFactor, textScale, showPanels, lineScale, change, f, onClickWidth, width, presetWidth, intervalTimeout, bandsNumber, hzStep;
+float showGain, z, X, Y, Z, PROPORTION, AngleH, AngleV, AngleZ, presetX, presetY, presetZ, presetAngleH, presetAngleV, presetAngleZ; 
+GLfloat x;
+
+typedef enum TypeSource TypeSource;
+enum TypeSource
+{
+	MIC, AUDIO_FILE, JACK
+};
+TypeSource typeSource;
+
+GtkObject *adjust_bands, *adjust_start;
+GtkWidget *pScaleBands, *pComboRange;
 
 #define RESIZE width/1200
 
 GMainLoop *loop;
 GstElement *pipeline;
-void sdlWindow(GtkWidget *pWidget, gpointer data);
-void playFromFile(GtkWidget *pWidget, gpointer data);
+
+void setPlayButtonIcon();
+void getTextDisplayLabel();
+void onReset();
+void setupSDL();
+void setupOpengl();
 void displaySpectro();
+void change_adjust_start();
 
 #endif

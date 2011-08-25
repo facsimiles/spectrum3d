@@ -24,7 +24,7 @@
 #include "menu.h"
 
 /* Select font */
-void selectFont(GtkWidget *pWidget, gpointer data)
+void selectFont(GtkWidget *comboColor, gpointer data)
 {
 	GtkFileFilter *filter = gtk_file_filter_new();
 	GtkWidget *pFileSelection;
@@ -59,7 +59,7 @@ void selectFont(GtkWidget *pWidget, gpointer data)
 void onPreferences(GtkWidget* widget, gpointer data)
 {
 	GtkWidget *pPreferences, *pNotebook, *pTabLabel;
-    	GtkWidget *pSpinWidth, *pLabel, *pCheckRealtime, *pComboPolicy, *pSpinPriority, *pCheckPreset, *pCheckEnableTouch;
+    	GtkWidget *pSpinWidth, *pLabel, *pCheckRealtime, *pComboPolicy, *pSpinPriority, *pCheckPreset, *pCheckEnableTouch, *spinInterval, *comboColor;
 	GtkWidget *pFrame, *pButtonSelectFont;
 	gboolean bState;
 	int i = 0;
@@ -95,11 +95,11 @@ void onPreferences(GtkWidget* widget, gpointer data)
 
 	/* SpinButton for choosing the width of the main window */
 	pFrame = gtk_frame_new("Width of the window");
-	pSpinWidth = gtk_spin_button_new_with_range(700, 1200, 50);
+	pSpinWidth = gtk_spin_button_new_with_range(700, 1500, 50);
 	gtk_box_pack_start(GTK_BOX(pVBox[0]), pHBox[0], TRUE, TRUE, 0);	
 	gtk_box_pack_start(GTK_BOX(pHBox[0]), pFrame, TRUE, TRUE, 0);
 	gtk_container_add(GTK_CONTAINER(pFrame), pSpinWidth);
-	gtk_spin_button_set_value (GTK_SPIN_BUTTON(pSpinWidth), (float)width); 
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON(pSpinWidth), (float)presetWidth); 
 	
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[1], TRUE, FALSE, 0);
 
@@ -110,6 +110,16 @@ void onPreferences(GtkWidget* widget, gpointer data)
 	g_signal_connect(G_OBJECT(pButtonSelectFont), "clicked", G_CALLBACK(selectFont), NULL);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[3], TRUE, FALSE, 0);
+
+	/* Combo box to change the color of the display */
+	pFrame = gtk_frame_new("Color of Display");
+	comboColor = gtk_combo_box_new_text();
+	gtk_container_add(GTK_CONTAINER(pFrame), comboColor);
+	gtk_box_pack_start(GTK_BOX(pHBox[4]), pFrame, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(pVBox[0]), pHBox[4], FALSE, FALSE, 0);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(comboColor), "PURPLE");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(comboColor), "RAINBOW");
+	gtk_combo_box_set_active(GTK_COMBO_BOX(comboColor), 0);
 
 	/* Check button to save the current position as 'Preset' */
 	pCheckPreset = gtk_check_button_new_with_label("Save current position as preset");
@@ -122,6 +132,15 @@ void onPreferences(GtkWidget* widget, gpointer data)
 	pTabLabel = gtk_label_new(sTabLabel[1]);
 	gtk_notebook_append_page(GTK_NOTEBOOK(pNotebook), pVBox[1], pTabLabel);
 	g_free(sTabLabel[1]);
+
+	/* SpinButton for choosing the speed */
+	pFrame = gtk_frame_new("Interval (msec)");
+	spinInterval = gtk_spin_button_new_with_range(100, 250, 50);
+	 gtk_spin_button_set_value (GTK_SPIN_BUTTON(spinInterval), (gdouble)interval);
+	gtk_container_add(GTK_CONTAINER(pFrame), spinInterval);
+	gtk_box_pack_start(GTK_BOX(pHBox[11]), pFrame, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(pVBox[1]), pHBox[11], FALSE, FALSE, 0);
+	gtk_spin_button_set_value (GTK_SPIN_BUTTON(spinInterval), interval);
 
 	gtk_box_pack_start(GTK_BOX(pVBox[1]), pHBox[13], FALSE, FALSE, 0);
 	//gtk_box_pack_start(GTK_BOX(pVBox[1]), pHBox[14], FALSE, FALSE, 0);
@@ -178,11 +197,15 @@ void onPreferences(GtkWidget* widget, gpointer data)
     	switch (gtk_dialog_run(GTK_DIALOG(pPreferences)))
 		{
 		case GTK_RESPONSE_OK:
-	    		width = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinWidth));
-			pref = fopen(prefPath, "w+");
+	    		pref = fopen(prefPath, "w+");
 			if (pref != NULL) {
-					fprintf(pref, "%d\n", width);
+				presetWidth = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinWidth));
+					change_adjust(NULL, NULL);
+					fprintf(pref, "%d\n", presetWidth);
+					width = presetWidth;
 					fprintf(pref, "%s\n", fontPreference);
+				gint index = gtk_combo_box_get_active(GTK_COMBO_BOX(comboColor));
+				colorType = index; // ColorType enum is detailed in menu.h
 				bState = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckPreset));
 					if (bState) {
 						presetX = X;
@@ -206,11 +229,12 @@ void onPreferences(GtkWidget* widget, gpointer data)
 						fprintf(pref, "%f\n", presetAngleV);
 						fprintf(pref, "%f\n", presetAngleZ);
 						}
+				interval = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinInterval));
+				fprintf(pref, "%d\n", interval);
 				realtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckRealtime));
 					fprintf(pref, "%d\n", realtime);
 				gchar *string = gtk_combo_box_get_active_text(GTK_COMBO_BOX(pComboPolicy));
 				sprintf(policyName, "%s", string);
-				//printf("policy = %s\n", policyName); 
 					fprintf(pref, "%s\n", policyName);
 				priority = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinPriority));
 					fprintf(pref, "%d\n", priority);
@@ -221,9 +245,7 @@ void onPreferences(GtkWidget* widget, gpointer data)
 			else {
 				printf("*** WARNING ***  Cannot open preferences file\n");
 				}
-		//printf("Main window's width is %d\n ", width);
-		//printf("Used font is %s\n ", fontPreference);
-	    	break;
+		break;
 		case GTK_RESPONSE_CANCEL:
 		case GTK_RESPONSE_NONE:
 		default:
@@ -239,9 +261,9 @@ void onShortcuts (GtkWidget* widget, gpointer data)
 	GtkListStore *pListStore;
 	GtkTreeViewColumn *pColumn;
 	GtkCellRenderer *pCellRenderer;
-	gchar *action[15] = {"Play/Pause", "Stop", "Rotate around X axis", "Rotate around Y axis", "Rotate around Z axis", "Translate along X axis", "Translate along Y axis", "Translate along Z axis", "Increase/decrease Gain", "Change starting value of the zoom", "Read small 50 msec samples	of a paused audio file" };
-	gchar *keyboard[15] = {"Space bar", "Escape", "Up/Down", "Right/Left", "'c' + Up/Down", "'x' + Left/Right", "'y' + Up/Down", "'z' + Up/Down", "'g' + Up/Down", "'s' + Up/Down", "'v' + Left"};
-	gchar *mouse[15] = {"", "", "Mouse Up/Down", "Mouse Right/Left", "'c' + mouse Up/Down", "'x' + mouse Right/Left", "'y' + mouse Up/Down", "'z' + mouse Up/Down", "'g' + mouse Up/Down"};
+	gchar *action[15] = {"Play/Pause", "Stop", "Rotate around X axis", "Rotate around Y axis", "Rotate around Z axis", "Translate along X axis", "Translate along Y axis", "Translate along Z axis", "Increase/decrease Gain", "Change starting value of the zoom", "Read small 50 msec samples	of a paused audio file", "Move pointer up/down", "Move pointer up/down fast"	 };
+	gchar *keyboard[15] = {"Space bar", "Escape", "Up/Down", "Right/Left", "'c' + Up/Down", "'x' + Left/Right", "'y' + Up/Down", "'z' + Up/Down", "'g' + Up/Down", "'s' + Up/Down", "'v' + Left", "SHIFT + right/left", "SHIFT + CTRL + right/left" };
+	gchar *mouse[15] = {"", "", "Mouse Up/Down", "Mouse Right/Left", "'c' + mouse Up/Down", "'x' + mouse Right/Left", "'y' + mouse Up/Down", "'z' + mouse Up/Down", "'g' + mouse Up/Down" };
 	gint i;
 
     	shortcutsWindow = gtk_dialog_new_with_buttons("Keyboard and mouse shortcuts",
@@ -285,7 +307,7 @@ void onShortcuts (GtkWidget* widget, gpointer data)
 
 	/* 3d column */
 	pCellRenderer = gtk_cell_renderer_text_new();
-   	pColumn = gtk_tree_view_column_new_with_attributes("KEYBORD SHORTCUT",
+   	pColumn = gtk_tree_view_column_new_with_attributes("MOUSE SHORTCUT",
 		pCellRenderer,
 		"text", MOUSE_COLUMN,
 		NULL);
@@ -383,6 +405,31 @@ void onGesturesShortcuts (GtkWidget* widget, gpointer data)
 	gtk_widget_destroy(shortcutsWindow);
 }
 
+void onQuickStart(GtkWidget* widget, gpointer data)
+{
+	GtkWidget *quickStartWindow, *label;
+	quickStartWindow = gtk_dialog_new_with_buttons("Spectrum3d : Quick Start",
+        GTK_WINDOW(mainWindow),
+        GTK_DIALOG_MODAL,
+        GTK_STOCK_OK,GTK_RESPONSE_OK,
+        NULL);
+	gtk_window_set_default_size(GTK_WINDOW(quickStartWindow), 500, 300);
+
+	gchar *quickStartText = " * 2 views are possible : 3D or 2D (flat view);\n * position of display and perspective can be translated or rotated along the 3 axis (see 'Shortcuts' in menu)\n * zoom can be adjusted :\n       - first displayed frequency can have almost any value;\n       - the range of displayed frequencies can vary from 40 to 20000 Hz;\n * scale (text and line) and a pointer pointing to an exact location can be displayed;\n * perspective and zoom can be changed even when playing is paused;";
+	label = gtk_label_new (quickStartText);
+	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(quickStartWindow)->vbox), label);
+	gtk_widget_show_all(GTK_DIALOG(quickStartWindow)->vbox);
+	
+    	switch (gtk_dialog_run(GTK_DIALOG(quickStartWindow)))
+		{
+		case GTK_RESPONSE_OK:
+	    		break;
+		default:
+		    break;
+	}
+	gtk_widget_destroy(quickStartWindow);
+}
+
 /* About menu */
 void onAbout(GtkWidget* widget, gpointer data)
 {
@@ -391,8 +438,8 @@ void onAbout(GtkWidget* widget, gpointer data)
         GTK_DIALOG_MODAL,
         GTK_MESSAGE_INFO,
         GTK_BUTTONS_OK,
-        "Spectrum3D-0.1.2\n"
-        "http://www.presences.org");
+        PACKAGE_STRING
+        "\nhttp://www.presences.org/spectrum3d");
     gtk_dialog_run(GTK_DIALOG(pAbout));
     gtk_widget_destroy(pAbout);
 }

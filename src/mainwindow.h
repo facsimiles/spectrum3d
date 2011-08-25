@@ -17,28 +17,39 @@
 #ifndef DEF_MAINWINDOW
 #define DEF_MAINWINDOW
 
+gboolean showEqualizerWindow, flatView, enableTouch;
 char *sFile;
 gchar *uri, file[200];
 GSList *filenames;
 guint displaySpectroTimeout;
 gint64 pos;
-int AUDIOFREQ, pose, spect_bands, playing, typeSource, zoom, stringInt, range, counterNumber, forward, backward, nSec, scale, firstPass3D, zoomFactor, textScale, showPanels, lineScale, change, f, onClickWidth, width, intervalTimeout;
+guint64 interval;
+int AUDIOFREQ, pose, spect_bands, playing, zoom, stringInt, range, counterNumber, forward, backward, nSec, scale, firstPass3D, zoomFactor, textScale, showPanels, lineScale, change, f, onClickWidth, width, presetWidth, intervalTimeout, widthFrame, hzStep, columnNumber, previousWidth;
 gboolean realtime;
 float z, X, Y, Z, PROPORTION; 
+gfloat BPlowerFreq, BPupperFreq;
 GLfloat x;
-GLfloat prec[205][10005];
+GLfloat prec[805][10005];
 GstElement *pipeline;
 GMainLoop *loop;
 const GValue *magnitudes;
 
+typedef enum TypeSource TypeSource;
+enum TypeSource
+{
+	MIC, AUDIO_FILE, JACK
+};
+TypeSource typeSource;
+
 GtkWidget *pScaleDepth;
 
 #define RESIZE width/1200
-GstElement *pipeline;
+GstElement *pipeline, *equalizer, *equalizer2, *equalizer3, *BP_BRfilter;
 
 int displayPausedSpectro();
 gboolean playSlowly();
 void getFileName();
+void setPlayButtonIcon ();
 void displaySpectro();
 gboolean sdlEvent();
 void setupSDL();
@@ -46,11 +57,15 @@ void setupOpengl();
 void setupGeis();
 void sdlQuit();
 void geisQuit();
-void playFromJack();
+void effects_window();
 void errorMessageWindow(char *message);
+void getBand();
 gboolean message_handler (GstBus * bus, GstMessage * message, gpointer data);
 GstTaskPool *
 test_rt_pool_new ();
+//#ifdef GEIS
+gboolean geisGesture();
+//#endif
 
 #endif
 

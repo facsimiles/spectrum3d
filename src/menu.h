@@ -19,7 +19,7 @@
 
 char fontPreference[100], prefPath[100];
 char policyName[20];
-int width, priority;
+int width, presetWidth, priority, interval;
 gboolean realtime, enableTouch;
 float X, Y, Z, AngleH, AngleV, AngleZ, presetX, presetY, presetZ, presetAngleH, presetAngleV, presetAngleZ; 
 static GtkWidget *mainWindow;
@@ -31,5 +31,15 @@ enum {
     MOUSE_COLUMN,
     N_COLUMN
 };
+
+typedef enum ColorType ColorType;
+enum ColorType
+{
+	PURPLE, RAINBOW, RED
+};
+ColorType colorType;
+
+
+void change_adjust(GtkWidget *pWidget, gpointer data);
 
 #endif

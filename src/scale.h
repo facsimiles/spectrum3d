@@ -17,9 +17,11 @@
 #ifndef DEFINE_SCALE
 #define DEFINE_SCALE
 
-int showPanels, zoom, zoomFactor, width;
-GLfloat x;
-float gain, yPanel, z;
+gboolean flatView;
+int zoom, zoomFactor, width, widthFrame, hzStep, bandsNumber, storedFreq;
+GLfloat x, flatViewHeight;
+float gain, yPanel, z, storedIntensity;
+GLfloat YscaleX, flatViewY;
  
 TTF_Font *font;
 #define RESIZE width/1200

@@ -17,7 +17,7 @@
 #ifndef DEFINE_GEIS
 #define DEFINE_GEIS
 
-int playing, fd;
+int playing, fd, change;
 float X, Y, Z; 
 float AngleH, AngleV, AngleZ;
 GeisStatus status;

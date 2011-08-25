@@ -17,13 +17,21 @@
 #ifndef DEFINE_DISPLAY
 #define DEFINE_DISPLAY
 
-int pose, firstPass3D, zoom, zoomFactor, textScale, lineScale, width, f, change, result;
-float gain, z, X, Y, Z; 
+gboolean flatView, changeViewParameter, pointer;
+int pose, firstPass3D, zoom, zoomFactor, textScale, lineScale, width, f, change, result, widthFrame, bandsNumber, storedFreq;
+float showGain, z, X, Y, Z, storedIntensity; 
 float AngleH, AngleV, AngleZ;
-GLfloat x;
-GLfloat prec[205][10005];
+GLfloat x, flatViewHeight, YscaleX, flatViewY;
+GLfloat prec[805][10005];
 const GValue *magnitudes;
 char fontPreference[100];
+
+typedef enum ColorType ColorType;
+enum ColorType
+{
+	PURPLE, RAINBOW, RED
+};
+ColorType colorType;
 
 #define RESIZE width/1200
 #define WIDTH_WINDOW 1200 * RESIZE
@@ -34,5 +42,6 @@ TTF_Font *font;
 int sdlEvent();
 void drawScale();
 void RenderText();
+void drawPointer();
 
 #endif

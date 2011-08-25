@@ -32,16 +32,32 @@
 
 #include "mainwindow.h"
 
-int spect_bands = 11025, counter = 0;
 const GValue *magni;
-GstElement *audio;
-gint64 pos;
+GMainLoop *loopTestSound;
+gdouble freqTestSound = 440;
+GstElement *srcTestSound;
+#define NBANDS 10
 
 #ifdef HAVE_LIBJACK
 	static GtkWidget *mainWindow;
 #endif
 
 static GstTaskPool *pool;
+
+void initGstreamer(){
+	gst_init (NULL, NULL);	
+	equalizer = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands");
+	g_assert (equalizer);
+	g_object_set (G_OBJECT (equalizer), "num-bands", NBANDS, NULL);
+	equalizer2 = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands2");
+	g_assert (equalizer2);
+	g_object_set (G_OBJECT (equalizer2), "num-bands", NBANDS, NULL);
+	equalizer3 = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands3");
+	g_assert (equalizer3);
+	g_object_set (G_OBJECT (equalizer3), "num-bands", NBANDS, NULL);
+	BP_BRfilter = gst_element_factory_make ("audiochebband", "BP_BRfilter");
+	g_assert (BP_BRfilter);
+}
 
 static GstBusSyncReply
 sync_bus_handler (GstBus * bus, GstMessage * message, GstElement * bin)
@@ -112,25 +128,29 @@ sync_bus_handler (GstBus * bus, GstMessage * message, GstElement * bin)
 /* Gstreamer message handler */
 gboolean message_handler (GstBus * bus, GstMessage * message, gpointer data)
 {	
-	counter = counter +1;
 	int ii = 0;
 			
-        if (message->type == GST_MESSAGE_ELEMENT && counter > counterNumber) {
-		counter = 0;
+        if (message->type == GST_MESSAGE_ELEMENT) {
+		//printf("message = element\n");
 		const GstStructure *s = gst_message_get_structure (message);
 		const gchar *name = gst_structure_get_name (s);
 		GstClockTime endtime;
+		//printf("name = %s\n", name);
 		
 
                 if (strcmp (name, "spectrum") == 0) {
+			//printf("message = element\n");
 			if (!gst_structure_get_clock_time (s, "endtime", &endtime))
 			endtime = GST_CLOCK_TIME_NONE;
 			magnitudes = gst_structure_get_value (s, "magnitude");
 			for (ii = 0; ii < 10000 ; ii++) {
 				magni = gst_value_list_get_value (magnitudes, ii);
 				prec[0][ii] = ((80 + (g_value_get_float(magni)))/40);
+				/*if (ii > 100 && ii < 120){
+					printf("%f ",prec[0][ii]);
+					} */
 				}
-			displaySpectro();
+			//displaySpectro();
 			}
 		}
 	if (message->type == GST_MESSAGE_EOS) {
@@ -213,19 +233,21 @@ getFileUri(){
 void playFromSource(GtkWidget *pWidget, gpointer data)
 {
 	guint displayPausedSpectroTimeout; 
-	guint64 interval = 200000000;
+	interval = 100;
 if (playing == 1)
     	{
 		if (pose == 0) {
 		        pose = 1;
+			setPlayButtonIcon();
 			gst_element_set_state (pipeline, GST_STATE_PAUSED);
 			displayPausedSpectroTimeout = g_timeout_add (80, (GSourceFunc) displayPausedSpectro, pipeline);
-			if (typeSource == 1) {
+			if (typeSource == AUDIO_FILE) {
 				g_timeout_add (80, (GSourceFunc) playSlowly, pipeline);
 				}
 			}
 		 else {
 		        pose = 0;
+			setPlayButtonIcon();
 			displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 			gst_element_set_state (pipeline, GST_STATE_PLAYING);
 		        }
@@ -233,100 +255,125 @@ if (playing == 1)
 
 /* Play */
 else if (playing == 0) {
-	PROPORTION = (width-200);
+	playing = 1;
+	setPlayButtonIcon();
+	if (flatView) {
+		width = 1200;
+		}
+	else {
+		width = presetWidth;
+		}
+	hzStep = (AUDIOFREQ/2) / spect_bands;
 	PROPORTION = (float)width / 1000;
 	x = 1.2 * RESIZE;
-	//z = PROPORTION;
 	changeDepth(pScaleDepth, NULL);
 	X = -0.7 * RESIZE;
 	Y = -0.1 * RESIZE;
 	Z = -1.05;
-	
+	BPlowerFreq = 0; BPupperFreq = 40000;
+		
 /* init everything */
 	setupSDL();	
 	setupOpengl();
 #ifdef HAVE_LIBUTOUCH_GEIS
 	setupGeis();
 #endif
-
-	int AUDIOFREQ = 44100;
-	guint timeoutEvent, timeoutPrintPosition, timeoutSeekToTime;
-	GstElement *alsasrc, *audioconvert, *spectrum, *alsasink, *playbin, *conv, *sink, *scaletempo;
+	guint timeoutEvent, timeoutPrintPosition, timeoutSeekToTime, timeoutTouch;
+	GstElement *alsasrc, *audioconvert, *audioconvert2, *audioconvert3, *spectrum, *alsasink, *playbin, *sink;
 	GstBus *bus, *busMH, *busrt;
 	GstStateChangeReturn ret;
 	GstCaps *caps;
 	GstPad *audiopad;
 
+	timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
+#ifdef HAVE_LIBUTOUCH_GEIS
+	if (enableTouch){
+		timeoutTouch = g_timeout_add (50, (GSourceFunc) geisGesture, NULL);
+		}		
+#endif
+
 /* SOURCE IS MICROPHONE */
-if (typeSource == 0) {
+if (typeSource == MIC) {
 	gst_init (NULL, NULL);
 	int jackActive = checkJackActive();
-    if (jackActive){
+	if (jackActive){
 		errorMessageWindowJack("JACK seems to be running\nStop JACK server and start playing again");
 		}
-    else {
-  	pool = test_rt_pool_new ();
+	else {
+	  	pool = test_rt_pool_new ();
 
-	loop = g_main_loop_new(NULL, FALSE);
-	playing = 1;
-  
-	pipeline = gst_pipeline_new ("pipeline");
-	g_assert (pipeline);
-	alsasrc = gst_element_factory_make ("alsasrc", "alsasrc");
-	g_assert (alsasrc);
-//g_object_set (alsasrc, "device", "hw:0", NULL);
-//g_object_set (alsasrc, "latency-time", (gint64) 2000, NULL);
-//g_object_set (alsasrc, "slave-method", 2, NULL);
-	audioconvert = gst_element_factory_make ("audioconvert", NULL);
-	g_assert (audioconvert);
-	spectrum = gst_element_factory_make ("spectrum", "spectrum");
-	g_assert (spectrum);	
-	g_object_set (G_OBJECT (spectrum), "bands", spect_bands, "threshold", -80, "interval", interval, NULL);
+		loop = g_main_loop_new(NULL, FALSE);
+		playing = 1;
+	  
+		pipeline = gst_pipeline_new ("pipeline");
+		g_assert (pipeline);
+		alsasrc = gst_element_factory_make ("alsasrc", "alsasrc");
+		g_assert (alsasrc);
+		audioconvert = gst_element_factory_make ("audioconvert", NULL);
+		g_assert (audioconvert);
+		audioconvert2 = gst_element_factory_make ("audioconvert", NULL);
+		g_assert (audioconvert2);
+		audioconvert3 = gst_element_factory_make ("audioconvert", NULL);
+		g_assert (audioconvert3);
+		spectrum = gst_element_factory_make ("spectrum", "spectrum");
+		g_assert (spectrum);	
+		g_object_set (G_OBJECT (spectrum), "bands", spect_bands, "threshold", -80, "interval", interval * 1000000, NULL);
+		equalizer = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands");
+		g_assert (equalizer);
+		g_object_set (G_OBJECT (equalizer), "num-bands", NBANDS, NULL);
+		equalizer2 = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands2");
+		g_assert (equalizer2);
+		g_object_set (G_OBJECT (equalizer2), "num-bands", NBANDS, NULL);
+		equalizer3 = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands3");
+		g_assert (equalizer3);
+		g_object_set (G_OBJECT (equalizer3), "num-bands", NBANDS, NULL);
+		if (showEqualizerWindow){
+			getBand();
+			}
+		BP_BRfilter = gst_element_factory_make ("audiochebband", "BP_BRfilter");
+		g_assert (BP_BRfilter);
+		g_object_set (G_OBJECT (BP_BRfilter), "lower-frequency", BPlowerFreq, "upper-frequency", BPupperFreq, NULL);
+		alsasink = gst_element_factory_make ("fakesink", "alsasink");
+		g_assert (alsasink);
 
-	alsasink = gst_element_factory_make ("fakesink", "alsasink");
-	g_assert (alsasink);
-//g_object_set (alsasink, "device", "hw:0", NULL);
-//g_object_set (alsasink, "latency-time", (gint64) 2000, NULL);
-//g_object_set (alsasink, "buffer-time", (gint64) 10000, NULL);
+		gst_bin_add_many (GST_BIN (pipeline), alsasrc, audioconvert, equalizer, equalizer2, equalizer3, audioconvert2, BP_BRfilter, audioconvert3, spectrum, alsasink, NULL);
+		caps = gst_caps_new_simple ("audio/x-raw-int", "rate", G_TYPE_INT, AUDIOFREQ, NULL);
+		if (!gst_element_link (alsasrc, audioconvert) ||
+		    !gst_element_link_filtered (audioconvert, equalizer, caps) ||
+		    !gst_element_link_many (equalizer, equalizer2, equalizer3, audioconvert2, BP_BRfilter, audioconvert3, spectrum, alsasink, NULL)) {
+		    fprintf (stderr, "can't link elements\n");
+			exit (1);
+		    }
+		if (realtime) {
+			bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+			gst_bus_set_sync_handler (bus, (GstBusSyncHandler) sync_bus_handler, pipeline);
+			gst_object_unref (bus);
+			}
 
-	gst_bin_add_many (GST_BIN (pipeline), alsasrc, audioconvert, spectrum, alsasink, NULL);
-	caps = gst_caps_new_simple ("audio/x-raw-int", "rate", G_TYPE_INT, AUDIOFREQ, NULL);
-	if (!gst_element_link (alsasrc, audioconvert) ||
-	    !gst_element_link_filtered (audioconvert, spectrum, caps) ||
-	    !gst_element_link (spectrum, alsasink)) {
-	    fprintf (stderr, "can't link elements\n");
-		exit (1);
-	    }
-if (realtime) {
-	bus = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
-	gst_bus_set_sync_handler (bus, (GstBusSyncHandler) sync_bus_handler, pipeline);
-	gst_object_unref (bus);
-	}
-
-	timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
-	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
-	ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
-	if (ret == GST_STATE_CHANGE_FAILURE){
-		g_print ("Failed to start up pipeline!\n");
+		//timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
+		displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
+		ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
+		if (ret == GST_STATE_CHANGE_FAILURE){
+			g_print ("Failed to start up pipeline!\n");
+			}
+		busMH = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
+		gst_bus_add_watch(busMH, message_handler, NULL);
+		printf ("Now playing\n");
+		g_main_loop_run (loop);
+		//g_source_remove(timeoutEvent);
+		g_source_remove(displaySpectroTimeout);
+		gst_element_set_state (pipeline, GST_STATE_NULL);
+		printf ("Stop playing\n");
+		gst_object_unref (busMH);
+		//sdlQuit();
+	#ifdef HAVE_LIBUTOUCH_GEIS
+		//geisQuit();
+	#endif
 		}
-	busMH = gst_pipeline_get_bus (GST_PIPELINE (pipeline));
-	gst_bus_add_watch(busMH, message_handler, NULL);
-	printf ("Now playing\n");
-	g_main_loop_run (loop);
-	g_source_remove(timeoutEvent);
-	g_source_remove(displaySpectroTimeout);
-	gst_element_set_state (pipeline, GST_STATE_NULL);
-	
-	gst_object_unref (busMH);
-	sdlQuit();
-#ifdef HAVE_LIBUTOUCH_GEIS
-	geisQuit();
-#endif
-	}
     }
 
 /* SOURCE IS AUDIO FILE */
-else if (typeSource == 1) {
+else if (typeSource == AUDIO_FILE) {
 	gst_init (NULL, NULL);
 	int jackActive = checkJackActive();
     if (jackActive){
@@ -347,25 +394,41 @@ while (filenames != NULL) {
 	spectrum = gst_element_factory_make ("spectrum", "spectrum");
 	g_assert (spectrum);
 	g_object_set (G_OBJECT (spectrum), "bands", spect_bands, "threshold", -80,
-	    "message", TRUE, "interval", interval, NULL);
-	conv = gst_element_factory_make ("audioconvert", "aconv");
-	g_assert (conv);
-	scaletempo = gst_element_factory_make ("scaletempo", "scaletempo");
-	g_assert (scaletempo);
-	g_object_set (G_OBJECT (scaletempo), "overlap", 0.3, "search", 15, "stride", 40, NULL);
+	    "message", TRUE, "interval", interval * 1000000, NULL);
+	audioconvert = gst_element_factory_make ("audioconvert", NULL);
+	g_assert (audioconvert);
+	audioconvert2 = gst_element_factory_make ("audioconvert", NULL);
+	g_assert (audioconvert2);
+	audioconvert3 = gst_element_factory_make ("audioconvert", NULL);
+	g_assert (audioconvert3);
+	equalizer = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands");
+	g_assert (equalizer);
+	g_object_set (G_OBJECT (equalizer), "num-bands", NBANDS, NULL);
+	equalizer2 = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands2");
+	g_assert (equalizer2);
+	g_object_set (G_OBJECT (equalizer2), "num-bands", NBANDS, NULL);
+	equalizer3 = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands3");
+	g_assert (equalizer3);
+	g_object_set (G_OBJECT (equalizer3), "num-bands", NBANDS, NULL);
+	if (showEqualizerWindow){
+		getBand();
+		}
+	BP_BRfilter = gst_element_factory_make ("audiochebband", "BP_BRfilter");
+	g_assert (BP_BRfilter);
+	g_object_set (G_OBJECT (BP_BRfilter), "lower-frequency", BPlowerFreq, "upper-frequency", BPupperFreq, NULL);
 	sink = gst_element_factory_make("autoaudiosink", "sink");
 	g_assert(sink);
-	gst_bin_add_many (GST_BIN (pipeline), conv, spectrum, sink, NULL);
+	gst_bin_add_many (GST_BIN (pipeline), audioconvert, equalizer, equalizer2, equalizer3, audioconvert2, BP_BRfilter, audioconvert3, spectrum, sink, NULL);
 	caps = gst_caps_new_simple ("audio/x-raw-int", "rate", G_TYPE_INT, AUDIOFREQ, NULL);
 
-	if (!gst_element_link_filtered (conv, spectrum, caps) ||
-	    !gst_element_link (spectrum, sink)){
+	if (!gst_element_link_filtered (audioconvert, equalizer, caps) ||
+	    !gst_element_link_many (equalizer, equalizer2, equalizer3, audioconvert2, BP_BRfilter, audioconvert3, spectrum, sink, NULL)){
 	    fprintf (stderr, "can't link elements\n");
 		exit (1);
 	    }
 	gst_caps_unref (caps);
 		
-	audiopad = gst_element_get_static_pad (conv, "sink");
+	audiopad = gst_element_get_static_pad (audioconvert, "sink");
 	gst_element_add_pad (pipeline, gst_ghost_pad_new (NULL, audiopad));
 	g_object_set(G_OBJECT(playbin), "audio-sink", pipeline, NULL);
 	gst_object_unref (audiopad);
@@ -378,14 +441,14 @@ if (realtime) {
 	gst_object_unref (busrt);
 	}
 
-	timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
+	//timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
 	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 	timeoutPrintPosition = g_timeout_add (200, (GSourceFunc) cb_print_position, pipeline);
 	gst_element_set_state (playbin, GST_STATE_PLAYING);
 	timeoutSeekToTime = g_timeout_add (101, (GSourceFunc) seek_to_time, pipeline);
 	printf ("Now playing\n");
 	g_main_loop_run (loop);
-	g_source_remove(timeoutEvent);
+	//g_source_remove(timeoutEvent);
 	g_source_remove(displaySpectroTimeout);
 	g_source_remove(timeoutPrintPosition);
 	g_source_remove(timeoutSeekToTime);
@@ -394,16 +457,17 @@ if (realtime) {
 	filenames = filenames->next;
 	getFileName();
 	}
-	sdlQuit();
+	printf ("Stop playing\n");
+	//sdlQuit();
 #ifdef HAVE_LIBUTOUCH_GEIS
-	geisQuit();
+	//geisQuit();
 #endif
 	}
     }
 
 /* SOURCE IS JACK */
 #ifdef HAVE_LIBJACK
-else if (typeSource == 2){
+else if (typeSource == JACK){
 	GstElement *src, *spectrum, *sink;
 	GstBus *bus;
 	
@@ -450,35 +514,103 @@ else if (typeSource == 2){
 	g_assert(src);
 	sink = gst_element_factory_make ("fakesink", NULL);
 	g_assert(sink);
+	audioconvert = gst_element_factory_make ("audioconvert", NULL);
+	g_assert (audioconvert);
+	audioconvert2 = gst_element_factory_make ("audioconvert", NULL);
+	g_assert (audioconvert2);
 	spectrum = gst_element_factory_make ("spectrum", "spectrum");
 	g_assert(spectrum);
-	g_object_set (G_OBJECT (spectrum), "bands", spect_bands, "threshold", -80, "interval", interval, NULL);
-	gst_bin_add_many (GST_BIN (pipeline), src, spectrum, sink, NULL);
+	g_object_set (G_OBJECT (spectrum), "bands", spect_bands, "threshold", -80, "interval", interval * 1000000, NULL);
+	equalizer = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands");
+	g_assert (equalizer);
+	equalizer2 = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands2");
+	g_assert (equalizer2);
+	g_object_set (G_OBJECT (equalizer2), "num-bands", NBANDS, NULL);
+	equalizer3 = gst_element_factory_make ("equalizer-nbands", "equalizer-nbands3");
+	g_assert (equalizer3);
+	g_object_set (G_OBJECT (equalizer3), "num-bands", NBANDS, NULL);
+	BP_BRfilter = gst_element_factory_make ("audiochebband", "BP_BRfilter");
+	g_assert (BP_BRfilter);
+	g_object_set (G_OBJECT (BP_BRfilter), "lower-frequency", BPlowerFreq, "upper-frequency", BPupperFreq, NULL);
+	gst_bin_add_many (GST_BIN (pipeline), src, equalizer, equalizer2, equalizer3, audioconvert, BP_BRfilter, audioconvert2, spectrum, sink, NULL);
 
-		if (!gst_element_link (src, spectrum) ||
-		    !gst_element_link (spectrum, sink)) {
+		if (!gst_element_link_many (src, equalizer, equalizer2, equalizer3, audioconvert, BP_BRfilter, audioconvert2, spectrum, sink, NULL)) { 
 		fprintf (stderr, "can't link elements\n");
 		exit (1);
 		}
-	timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
+	//timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
 	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
 	printf ("Now playing\n");
 	g_main_loop_run (loop);
-	g_source_remove(timeoutEvent);
+	//g_source_remove(timeoutEvent);
 	g_source_remove(displaySpectroTimeout);
 	gst_element_set_state (pipeline, GST_STATE_NULL);
+	printf ("Stop playing\n");
 	gst_object_unref(pipeline);
 
-	sdlQuit();
+	//sdlQuit();
 #ifdef HAVE_LIBUTOUCH_GEIS
-	geisQuit();
+	//geisQuit();
 #endif
 	}
 #endif
+playing = 0;
+g_source_remove(timeoutEvent);
+sdlQuit();
+#ifdef HAVE_LIBUTOUCH_GEIS
+g_source_remove(timeoutTouch);
+geisQuit();
+#endif
 }
 
 }
+
+void change_freq_test_sound( GtkWidget *widget, gpointer data )
+{
+	freqTestSound = gtk_spin_button_get_value (GTK_SPIN_BUTTON(widget));
+	g_object_set (G_OBJECT (srcTestSound), "freq", freqTestSound, NULL);
+}
+
+void change_volume_test_sound(GtkWidget *pWidget, gpointer data)
+{
+	gdouble value;
+	value = gtk_scale_button_get_value(GTK_SCALE_BUTTON(pWidget));
+	g_object_set (G_OBJECT (srcTestSound), "volume", value, NULL);
+}
+
+void playTestSound(GtkWidget *pWidget, gpointer data){
+	GstElement *bin;
+	GstElement *audioconvert, *sink;
+	
+	if (loopTestSound == NULL){
+		gst_init (NULL, NULL);
+		bin = gst_pipeline_new ("bin");
+		srcTestSound = gst_element_factory_make ("audiotestsrc", "src");
+		g_object_set (G_OBJECT (srcTestSound), "wave", 0, "freq", freqTestSound, NULL);
+		audioconvert = gst_element_factory_make ("audioconvert", NULL);
+		g_assert (audioconvert);
+		sink = gst_element_factory_make ("autoaudiosink", "sink");
+		gst_bin_add_many (GST_BIN (bin), srcTestSound, audioconvert, sink, NULL);
+		if (!gst_element_link_many (srcTestSound, audioconvert, sink, NULL)){ 
+			fprintf (stderr, "can't link elements\n");
+			exit (1);
+			}
+		gst_element_set_state (bin, GST_STATE_PLAYING);
+		printf("Play test sound \n");
+		loopTestSound = g_main_loop_new (NULL, FALSE);
+		g_main_loop_run (loopTestSound);
+		gst_element_set_state (bin, GST_STATE_NULL);
+		gst_object_unref (bin);
+		}
+	else {
+		g_main_loop_quit(loopTestSound);
+		printf("Stop test sound \n");
+		loopTestSound = NULL;
+		}
+}
+
+
 
 
 

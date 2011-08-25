@@ -1,8 +1,8 @@
 SPECTRUM 3D: 3D AUDIO SPECTRUM ANALYSER IN REAL TIME
 
-Spectrum 3D dispays a 3D audio spectrogram in real time; the source can be either the microphone or an audio file or optionally jack (jack-audio-connection-kit). Optionally, it supports multitouch gestures from touscreen and touchpad. Optionally also, Gstreamer input can be run in realtime even if Jack is not used. It is build with the Gstreamer, SDL, OpenGl, GTK+-2.0 and uTouch-Geis free libraries and is under GPL license. It is written for Ubuntu but should work for any other Linux distribution except regarding the Touch function for which the libraries that are used seem not very widespread yet. 
+Spectrum 3D dispays a 3D audio spectrogram in real time; the source can be either the microphone or an audio file or optionally jack (jack-audio-connection-kit). Optionally, it supports multitouch gestures from touchscreen and touchpad. Optionally also, the audio stream can be run in realtime even if Jack is not used. It is build with the Gstreamer, SDL, OpenGl, GTK+-2.0 and uTouch-Geis free libraries and is under GPL license. It is written for Ubuntu but should work for other Linux distributions except maybe for the multitouch abilities (the uTouch library use is not yet very common). 
 
-If you want multitouch support, you should read the notes at the bottom of the page. A tutorial is provided in the 'Doc' directory as well video tutorials.
+If you want multitouch support, you should read the notes at the bottom of the page. A tutorial is provided in the 'Doc' directory.
 
 *******************
 |  INSTALLATION:  |
@@ -22,10 +22,9 @@ FOR UBUNTU 10.10 and 11.04 : All dependencies are available in the Ubuntu reposi
 	For JACK support : 
 		- libjack-dev (for jack1) or libjack-jackd2-dev for jack2; note that you don't need to have the 'jackd' package installed, but only the '-dev' library;
 
-	For multitouch support (touchscreen and also for multitouch touchpad in Natty):
-		- libutouch-geis-dev version 2; this is the default in Natty or later; in Maverick, you have to install utouch-geis from uTouch website (https://launchpad.net/canonical-multitouch/utouch-geis) since Maverick provides the version 1 in the repositories. It is also possible to use the '.deb' packages from Ubuntu repositories for Natty : install 'libutouch-geis1' first, then 'libutouch-geis-dev'. If you want a newer version of uTouch-geis that is not in the repositories, you can first install its dependencies from Ubuntu (type in a terminal 'sudo apt-get build-dep libutouch-geis-dev'), then install the newer version of libutouch-geis from uTouch-Geis website. IMPORTANT NOTE : filtering gestures is not possible in version prior 2.1.0; this is due to Bug#769859; this feature is available fron version 2.1.0, that is not yet in the Natty's repositories.  If you want to have filtering of the gestures working in Natty Marwahl, you have to uninstall the 2.0.10 version from repositories and replace it by at least 2.1.0 version, that you can find on uTouch-Geis website (https://launchpad.net/utouch-geis); alternatively you can also install the libutouch-geis1 and libutouch-geis-dev packages for Ubuntu Oneiric Ocelot (11.10).
-		
-	
+	For multitouch support (touchscreen and also for multitouch touchpad from Natty):
+		- libutouch-geis-dev version 2. For Ubuntu Oneiric Ocelot (11.10), use the packages from repositories. For Ubuntu Natty Narwhal (11.04), the repositories version will work, but filtering on number of touches won't work (Bug#769859 in libutouch-geis); to solve this you need a version of uTouch-geis that is at least 2.1.0; you can have it either by installing the '.deb' packages from Oneiric repositories (type in a terminal 'sudo apt-get build-dep libutouch-geis-dev', then install 'libutouch-geis1' first, then 'libutouch-geis-dev'), or by compiling the latest version from source (https://launchpad.net/utouch-geis); if you compile from sources, you can type in a terminal 'sudo apt-get build-dep libutouch-geis-dev' to have all dependecies installed. For Ubuntu Maverick (10.10), do not use the repositories version; use the solutions proposed for Natty. I don't know if multitouch support can easily be implemented in Ubuntu Lucid Lynx (10.04) or earlier.
+
 FOR OTHER DISTRIBUTIONS : 
 	For the other distributions, the dependencies should be very similar. Only the multitouch features maybe won't work since uTouch-Geis has been build for Ubuntu. However, the uTouch Suite (including uTouch-Geis) starts beeing ported in other distributions such as Gentoo (https://sabotageandi.wordpress.com/2011/04/20/utouch-gentoo/) or Fedora. More info on this in the documentation directory.
 
@@ -33,13 +32,13 @@ FOR OTHER DISTRIBUTIONS :
 """""""""""""""""""""""""""""""""
  	1) in a terminal, go to the directory where the sources are; for example, if the source package is in the HOME directory :
 
-		cd ~/spectrum3d-0.2.3 (if the sources are in the '/home/victor' directory);
+		cd ~/spectrum3d-the-actual-version (if the sources are in the '/home/victor' directory);
 
 	2) type : 
 
 		./configure 
 
-	By default, if 'libjack-dev' or 'libjack-jackd2-dev' is found on your system, JACK support is automatically enabled. Also, if 'libbamf-dev' and 'libutouch-geis-dev' version 2 are found, MULTITOUCH support is automatically enabled. If those libraries are not installed, JACK and MULTITOUCH support are not enabled. However, if you have those libraries installed but don't want those features enabled, you have to type '--disable-jack' or '--disable-geis' after 'configure' ('--enable-jack=no' and '--enable-geis=no' also works).
+	If 'libjack-dev' or 'libjack-jackd2-dev' is found, JACK support will be enabled. Also, if 'libbamf-dev' and 'libutouch-geis-dev' version 2 are found, MULTITOUCH support will be enabled. If those libraries are not installed, JACK and MULTITOUCH support are not enabled. However, if you have those libraries installed but don't want those features enabled, you have to type '--disable-jack' or '--disable-geis' after 'configure' ('--enable-jack=no' and '--enable-geis=no' also works).
 	For example :	
 
 		./configure --disable-jack --disable-geis
@@ -75,11 +74,20 @@ Run it from a terminal by typing :
 
 or from the 'Menu->Applications->Sound & Video'
 
-From the graphical interface, you can play/pause or stop playing. For audio files, you can seek forward or backward (5 seconds by 5 seconds); selection of multiple audio files is possible. Audio source can be : microphone, audio file or jack (if you have activated JACK support). You can reset position of the graph, or set it in a 'front view' position, or set it in a preset position that you have chosen and stored. You can change the range of the zoom (from 1000 to 20000 Hz) and the starting value of the zoom (from 0 to 4000 Hz). You can change the speed of display (interval between 100 and 500 msec). You can choose not to display the line scale and the numeric scale. You can also adjust the diplay of the gain. All those commands work in the playing or in the paused state (when image is frozen).
+From the graphical interface, you can play/pause or stop playing. For audio files, you can seek forward or backward (5 seconds by 5 seconds); selection of multiple audio files is possible. 
 
-It is possible to rotate or translate the graph along the X, Y and Z axis, either by keyboard commands, or by mouse (+/- keyboard) commands, or by touch gestures (if you have a touchscreen or a multitouch touchpad, and if you have enabled multitouch support at compilation). All those commands work in the playing state as well as in the paused state.
+You can play a test sound which is a sine wave from 1 to 20000 Hz.
 
-You'll find below a summary of the keyboard, mouse and gestures commands. You can also find a summary of this in the menu, at the 'Help'->'Shortcuts' and 'Gestures Shortcuts' items. From the 'Edit'->'Preferences' menu, you can specify : the width of the displaying window (700 to 1200 pixels), the path of the font beeing used, the coordinates of the preset position of the graph, wether you want Spectrum3d to run in realtime mode (and if so, choose beween SCHED_RR or SCHED_FIFO policy, and set priority). All those preferences are kept in a 'preferences' file that is created at first use of Spectrum3d and placed in the home directory : ~/.spectrum3d/spectrum3d.pref. Everytime Spectrum3d starts, it check some values of this 'preferences' file for consistency; if out of range value is found, a new 'preferences' file with default values is created.
+Audio source can be microphone, audio file or jack (if you have enabled JACK support). You can change the speed of refreshing of the display. You can show a window that allows to control an equalizer and a band-pass (BP) or band-reject (BR) filter. For the BP/BR filter, you can set the lower and upper frequencies. For the eqalizer, you can adjust the gain (from -72dB to +36dB); for each band, you can change the frequency (from 20 to 20000 Hz) it works on and its the bandwidth (from 0 to 20000 Hz). 
+
+The lowest displayed frequency is 0 Hz by default, and it can be increased. The default range is 2000 Hz. It can be decreased to 40 Hz or raised to 20000Hz. To change this, you can either change it by using the 'Range of Display' scale, or increase it by changing the factor that is on its right : this factor multiplies the frequency range. The smallest possible step between 2 analyzed and displayed frequencies is 2 Hz.
+
+You can choose between 2 types of view :  - a 3D view that shows frequency, intensity and time; It is possible to rotate or translate the display along the X, Y and Z axis, either by keyboard commands, or by mouse (+/- keyboard) commands, or by touch gestures (if enabled). All the analyzed values are kept in memory, wich implies that even if zoom or perspective changes, any value can be retrieved at any time, even when playing is paused.
+					   - a 2D 'flat' view : that shows time versus frequency; the intensity however is represented by the amount of red colour;
+
+The perespective can be reset, set to a 'front' view (frequency versus intensity), or set to values preset by the user. The text can be displayed or not, as well as the line scale. A 'pointer' can be displayed, showing a location on the scale and its exact numerical value as well as the intensity of the frequency (fot the 3D view).
+
+You'll find below a summary of the keyboard, mouse and gestures commands. You can also find a summary of this in the menu, at the 'Help'->'Shortcuts' and 'Gestures Shortcuts' items. From the 'Edit'->'Preferences' menu, you can specify : the width of the displaying window (700 to 1200 pixels), the path of the font beeing used, the coordinates of the preset position of the graph, the color of display ('rainbow' option make the color to change so that the differents 'layers' can be distinguished), wether you want Spectrum3d to run in realtime mode (and if so, choose beween SCHED_RR or SCHED_FIFO policy, and set priority). All those preferences are kept in a 'preferences' file that is created at first use of Spectrum3d and placed in the home directory : ~/.spectrum3d/spectrum3d.pref. Everytime Spectrum3d starts, it check some values of this 'preferences' file for consistency; if out of range value is found, a new 'preferences' file with default values is created.
 
 KEYBOARD AND MOUSE SHORTCUTS :
 """"""""""""""""""""""""""""""	
@@ -98,6 +106,9 @@ Translate along Z axis	'z' + up/down		'z' + mouse up/down
 Increase/decrease Gain	'g' + up/down		'g' + mouse up/down
 Change starting 
 of the zoom		's' + up/down
+Move pointer up/down	SHIFT + right/left
+Move pointer up/down
+    fast		SHIFT + CTRL + right/left
 Read small 50 msec 
 samples	of a paused
 audio file		'v' + left
@@ -131,8 +142,7 @@ PREFERENCES :
 3. RealTime mode will allow Spectrum3d to have priority on other running processes, in order to not be slowed down by them; it won't decrease the amount of CPU and GPU ressources needed to perform the task. IMPORTANT WARNING : If you want to take advantage of this you should edit or create an '/etc/security/limits.d/audio.conf' file and put this inside : 
 
 	@audio   -  rtprio     95
-	@audio   -  memlock    unlimited
-
+	
 then you should add yourself as a member of the 'audio' group :
 
 	- either go in System->Preferences->Users and Groups->Manage Groups, then select the 'audio' groups, click on 'Properties' and add yourself;
@@ -140,10 +150,10 @@ then you should add yourself as a member of the 'audio' group :
 
 then reboot.
 
-If you don't do this, you'll have to run Spectrum3d as root, wich is NOT RECOMMANDED AT ALL.
+If you don't do this, you'll have to run Spectrum3d as root, which is NOT RECOMMANDED AT ALL.
 You'll find more information in the 'Realtime' file in the Doc directory.
 
-4. Multitouch support is provided by the uTouch-geis API. For now, the whole screen receives fingers input for Spectrum3d while Spectrum3d is running (input is not limited to the Spectrum3d window), unless you use a version of uTouch-geis that is at least 2.1.0. On the other hand, when Sprectrum3d is running, the mouse pointer cannot be used from the touchpoint on the screen, but the mouse pointer is still drived by the mouse. This behaviour could be the same in Natty, if you have a touchpad that supports multitouch : the touchpad only receives input as multitouch gestures, and you cannot use it anymore to drive the mouse as long as Spectrum 3d is running. 
+4. Multitouch support is provided by the uTouch-geis API. For now, the whole screen receives fingers input for Spectrum3d while Spectrum3d is running (input is not limited to the Spectrum3d window), unless you use a version of uTouch-geis that is at least 2.1.0. On the other hand, when Sprectrum3d is running, the mouse pointer cannot be used from the touchpoint on the screen, but the mouse pointer is still drived by the mouse. This behaviour could be the same in Natty or later, if you have a touchpad that supports multitouch : the touchpad only receives input as multitouch gestures, and you cannot use it anymore to drive the mouse as long as Spectrum 3d is running. 
 
 You'll find more information in the 'Multitouch' file in the Doc directory.
 

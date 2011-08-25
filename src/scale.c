@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <gtk/gtk.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <SDL/SDL.h>
@@ -31,6 +32,32 @@ int xX = 0, yY = 0, zZ = 0;
 
 /* Draw line scale and panels */
 void drawScale() {
+
+if (flatView){
+	GLfloat i = 0, s = 0.02, y = flatViewHeight;
+	glBegin(GL_LINES);
+	glColor3f(0.9, 0.9, 0.9);
+	glVertex3f( s, 0 * y, 0); 
+	glVertex3f( 0.001, 0 * y, 0);
+	glVertex3f( s, 0.5 * y, 0); 
+	glVertex3f( 0.001, 0.5 * y, 0);
+	glVertex3f( s, 1 * y, 0); 
+	glVertex3f( 0.001, 1 * y, 0);
+	for (i = 0; i < 1; i+=0.1) {
+		glColor3f(0.5, 0.5, 0.5);
+		glVertex3f( s/2, i * y, 0);
+		glVertex3f( 0.001, i * y, 0);
+		}
+	/*for (i = 0; i < 1; i+=0.02) {
+		glColor3f(0.2, 0.2, 0.2);
+		glVertex3f( s, i * y, 0);
+		glVertex3f( 0, i * y, 0);
+		}*/
+glEnd();
+	
+}
+
+else{	
 	GLfloat i = 0, alpha = 0;
 
 if (z == 0) {
@@ -81,8 +108,9 @@ else {
 		}
 glEnd();
 }
+}
 
-	if (showPanels == 1) {
+	/*if (showPanels == 1) {
 		alpha = 0.2;
 		glBegin(GL_QUADS);
 		glColor4f(1, 1, 1, alpha);
@@ -97,7 +125,7 @@ glEnd();
 		glVertex3f( 1 * x, yPanel, -z);
 		glVertex3f( 1 * x, yPanel, 0.05);
 		glEnd();
-		}
+		}*/
 }
 
 /* Print text scale */
@@ -106,13 +134,20 @@ void RenderText() {
 	xX = 0, yY = 0, zZ = 0;
 	
 	glColor3f(0.7, 0, 0.8);
-	glTranslatef(0, 0, 0.05);
+	if (flatView){
+		glTranslatef(0, 0.035, 0.05);
+		}
+	else {
+		glTranslatef(0, 0, 0.05);
+		}
 	glRotatef(180, 1, 0, 0);
 	glScalef(0.002, 0.002, 0.002);
 	SDL_Color Color = {150, 0, 240};
 	
-	for (i = (zoom * 2); i <= ((zoom * 2) + (zoomFactor * 1000)); i+= (zoomFactor * 100)) {
-	sprintf(textToRender, "%d", i);
+	//for (i = (zoom * 2); i <= ((zoom * 2) + (zoomFactor * 1000)); i+= (zoomFactor * 100)) {
+	for (i = 0 + (zoom * hzStep); i <= ((hzStep * bandsNumber *zoomFactor) + (zoom * hzStep)); i+= ((hzStep * bandsNumber * zoomFactor)/10)) {
+			
+			sprintf(textToRender, "%d", i);
 			
 			SDL_Surface *Message = TTF_RenderText_Blended(font, textToRender, Color);
 			unsigned Texture = 0;
@@ -134,8 +169,75 @@ void RenderText() {
 
 			glDeleteTextures(1, &Texture);
 			SDL_FreeSurface(Message);
-			xX +=59 * RESIZE;
+			if (flatView){
+				yY -= 33;
+				}
+			else {
+				xX +=59 * RESIZE;
+				}
 		}
+}
+
+void drawPointer(){
+	if (flatView){
+		glBegin(GL_LINES);
+		glColor3f(0.9, 0.9, 0.9);
+		glVertex3f( -1, flatViewY, 0.001); 
+		glVertex3f( 0, flatViewY, 0.001);
+		glEnd();
+		}
+	else {
+		glBegin(GL_LINES);
+		glColor3f(0.9, 0.9, 0.9);
+		glVertex3f( YscaleX, 1, 0); 
+		glVertex3f( YscaleX, 0, 0);
+		glEnd();
+		}
+}
+
+void drawPointerText(){
+	glLoadIdentity();
+	int i = 0;
+	xX = 0, yY = 0, zZ = 0.01;
+	
+	glColor3f(0.7, 0, 0.8);
+	if (flatView){
+		glTranslatef(-0.65, -0.32, -0.9);
+		}
+	else {
+		glTranslatef(-0.6 * x, -0.3, -0.9);
+		}
+	glRotatef(180, 1, 0, 0);
+	glScalef(0.002, 0.002, 0.002);
+	SDL_Color Color = {150, 0, 240};
+	
+	if (flatView){
+		sprintf(textToRender, "Pointer : %d Hz", (int)(storedFreq * hzStep), storedIntensity);
+		}
+	else {
+		sprintf(textToRender, "Pointer : %d Hz;  Intensity = %f dB", (int)(storedFreq * hzStep), storedIntensity);
+		}
+	
+	SDL_Surface *Message = TTF_RenderText_Blended(font, textToRender, Color);
+	unsigned Texture = 0;
+
+	glGenTextures(1, &Texture);
+	glBindTexture(GL_TEXTURE_2D, Texture);
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Message->w, Message->h, 0, GL_BGRA, GL_UNSIGNED_BYTE, Message->pixels);
+	
+	glBegin(GL_QUADS);
+	glTexCoord2d(0, 0); glVertex3d(xX, yY, zZ);
+	glTexCoord2d(1, 0); glVertex3d(xX+Message->w, yY, zZ);
+	glTexCoord2d(1, 1); glVertex3d(xX+Message->w, yY+Message->h, zZ);
+	glTexCoord2d(0, 1); glVertex3d(xX, yY+Message->h, zZ);
+	glEnd();
+
+	glDeleteTextures(1, &Texture);
+	SDL_FreeSurface(Message);
 }
 
 

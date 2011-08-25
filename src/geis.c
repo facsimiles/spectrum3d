@@ -255,10 +255,10 @@ target_subscription(Geis geis, GeisSubscription subscription)
 #endif
 
 
-int geisGesture()
+gboolean geisGesture()
 {
 	char *windowName = getCurrentApp();
-	//printf("appName = %s\n", appName);
+	//printf("windowName = %s\n", windowName);
 	int result = 0;
 	GeisEvent eventGeis;
 	status = geis_dispatch_events(geis);
@@ -280,7 +280,7 @@ int geisGesture()
 		case GEIS_EVENT_GESTURE_UPDATE:
 		case GEIS_EVENT_GESTURE_END:
 			if (strcmp(windowName, PACKAGE_NAME) == 0) {
-		    		result = dump_gesture_event(eventGeis);
+		    		change = dump_gesture_event(eventGeis);
 				}
 			break;
 		default:
@@ -290,12 +290,13 @@ int geisGesture()
 	status = geis_next_event(geis, &eventGeis);
 	}
     
-if (result == 1){
+/*if (result == 1){
 	return 1;
 	}
 else {
 	return 0;
-	}
+	}*/
+return TRUE;
 }
 
 #endif

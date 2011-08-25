@@ -17,16 +17,16 @@
 #ifndef DEFINE_EVENTS
 #define DEFINE_EVENTS
 
-int zoom, result;
-float gain, X, Y, Z; 
-float AngleH, AngleV, AngleZ;
-gboolean enableTouch;
+gboolean enableTouch, changeViewParameter;
+int zoom, result, bandsNumber, change;
+float gain, X, Y, Z, AngleH, AngleV, AngleZ;
+GLfloat x, YscaleX, flatViewY, flatViewHeight;
 
 void sdlWindow();
 void onStop();
 
-#ifdef GEIS
+/*#ifdef GEIS
 int geisGesture();
-#endif
+#endif*/
 
 #endif

@@ -36,12 +36,11 @@ gboolean sdlEvent()
 	int MouseX,MouseY;
 	//int result = 0;
  	
-#ifdef HAVE_LIBUTOUCH_GEIS
+/*#ifdef HAVE_LIBUTOUCH_GEIS
 if (enableTouch){
 	result = geisGesture();	
 	}		
-#endif
-	//SDL_EnableKeyRepeat(10, 10);
+#endif*/
 	
 	/* Keyboard events */
 	keys = SDL_GetKeyState(NULL);
@@ -92,12 +91,32 @@ if (enableTouch){
 				gain-=0.001;
 				}
 			}
-		else if ( keys[SDLK_UP] ) {
+		else if ( (keys[SDLK_LSHIFT] || keys[SDLK_RSHIFT]) && (keys[SDLK_LCTRL] || keys[SDLK_RCTRL]) && keys[SDLK_RIGHT] ) {
+			YscaleX +=  (x / bandsNumber) * 10;
+			flatViewY += (flatViewHeight / bandsNumber) * 10;
+			changeViewParameter = TRUE;
+			}
+		else if ( (keys[SDLK_LSHIFT] || keys[SDLK_RSHIFT]) && (keys[SDLK_LCTRL] || keys[SDLK_RCTRL]) && keys[SDLK_LEFT] ) {
+			YscaleX -= (x / bandsNumber) * 10;
+			flatViewY -= (flatViewHeight / bandsNumber) * 10;
+			changeViewParameter = TRUE;
+			}
+		else if ( (keys[SDLK_LSHIFT] || keys[SDLK_RSHIFT]) && keys[SDLK_RIGHT] ) {
+			YscaleX += x / bandsNumber;
+			flatViewY += flatViewHeight / bandsNumber;
+			changeViewParameter = TRUE;
+			}
+		else if ( (keys[SDLK_LSHIFT] || keys[SDLK_RSHIFT]) && keys[SDLK_LEFT] ) {
+			YscaleX -= x / bandsNumber;
+			flatViewY -= flatViewHeight / bandsNumber;
+			changeViewParameter = TRUE;
+			}
+		/*else if ( keys[SDLK_UP] ) {
 			AngleV+=0.4;
 			}
 		else if ( keys[SDLK_DOWN] ) {
 			AngleV-=0.4;
-			}
+			}*/
 		else if ( keys[SDLK_RIGHT] && !keys[SDLK_v] ) {
 			AngleH+=0.4;
 			}
@@ -110,14 +129,14 @@ if (enableTouch){
 		else if ( keys[SDLK_p] ) {
 			Z-=0.004;
 			}
-
+		
 if ( keys[SDLK_c] || keys[SDLK_g] || keys[SDLK_s] || keys[SDLK_x] || keys[SDLK_y] || keys[SDLK_z] || keys[SDLK_UP] || keys[SDLK_DOWN] || keys[SDLK_LEFT] || keys[SDLK_RIGHT] || keys[SDLK_SPACE] ) {
-			result = 1;
+			change = 1;
 			}
 		
 	/* Mouse and combined keyboard and mouse events */
 	if(SDL_GetMouseState(NULL, NULL)&SDL_BUTTON(1)) {
-		result = 1;
+		change = 1;
 		SDL_GetRelativeMouseState(&MouseX,&MouseY);
 		if ( keys[SDLK_x] && (MouseX < 100 && MouseX > -100) ) {
 			if (MouseX > 0) {
@@ -162,6 +181,12 @@ if ( keys[SDLK_c] || keys[SDLK_g] || keys[SDLK_s] || keys[SDLK_x] || keys[SDLK_y
 			    switch(event.key.keysym.sym) {
 				case SDLK_ESCAPE:
 					onStop();
+					break;
+				case SDLK_UP :
+					AngleV+=0.4;
+					break;
+				case SDLK_DOWN && SDLK_t:
+					AngleV-=0.4;
 					break;
 				default:
 				break;

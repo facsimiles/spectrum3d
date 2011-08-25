@@ -1,0 +1,36 @@
+
+2011-08-25  Bernard Victor Delvaux  <nadaeck@hotmail.com>
+
+    Version : Spectrum3d-1.0.0 : 
+    * main.c : rewriten to make UI more clear and organized
+    * main.c : zoom is much more precise : range is from 40 Hz to 20000 Hz; first displayed frequency can be any value;
+    * display : added a 'pointer' that can be set precisely; the corresponding frequency is then showed;
+    * display : added another type of view : the 'flat view' : 2D view in which the intensity of the frequencies are in differents levels of red;
+    * display : in the 3D view, frequencies are now drawed as 'LINES_STRIPS' and not 'QUADS' anymore;
+    * equalizer.c : new file : set up an equalizer and band-pass/band-reject filter;
+    * scale.c (drawPointer and drawPointerText): draw the pointer and its corresponding numerical values;
+
+2011-07-25  Bernard Victor Delvaux  <nadaeck@hotmail.com>
+
+    Version : Spectrum3d-0.2.3 : 
+    * geis.c : filtering of number of touches is now effective (Bug#769859 in libutouch-Geis);
+    * configure.ac and makefile.am : use of Autoconf and Autoconf for compilation and installation;
+
+2011-05-04  Bernard Victor Delvaux  <nadaeck@hotmail.com>
+
+    Version : Spectrum3d-0.2.2' : 
+    * geis.c : Spectrum3d is now multitouch (using the uTouch-Geis API); 
+    * menu.c : new file with all the menu and submenu code;
+    * testrtpool : new file : allows real time processing of audio;
+    * configure and makefile : use of 'configure' and 'makefile' to compile and install.
+
+
+2011-04-08  Bernard Victor Delvaux  <nadaeck@hotmail.com>
+
+    This is the first release of 'Spectrum3d-0.2.1' : it is now 3D with OpenGL : the image can be rotated or translated along the three axis, even if the diplay is paused.
+
+
+2011-01-05  Bernard Victor Delvaux  <nadaeck@hotmail.com>
+
+    This is the first release of the software called 'Spectrum-0.1.1', showing only a 'flat view' perspective in a SDL window; no 3D here yet. It support microphone , audio file or jack input.
+
