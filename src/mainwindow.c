@@ -257,12 +257,12 @@ if (playing == 1)
 else if (playing == 0) {
 	playing = 1;
 	setPlayButtonIcon();
-	if (flatView) {
-		width = 1200;
-		}
-	else {
+	//if (viewType == FLAT) {
+	//	width = 1200;
+	//	}
+	//else {
 		width = presetWidth;
-		}
+	//	}
 	hzStep = (AUDIOFREQ/2) / spect_bands;
 	PROPORTION = (float)width / 1000;
 	x = 1.2 * RESIZE;
@@ -285,6 +285,7 @@ else if (playing == 0) {
 	GstCaps *caps;
 	GstPad *audiopad;
 
+	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 	timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
 #ifdef HAVE_LIBUTOUCH_GEIS
 	if (enableTouch){
@@ -351,7 +352,7 @@ if (typeSource == MIC) {
 			}
 
 		//timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
-		displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
+		//displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 		ret = gst_element_set_state (pipeline, GST_STATE_PLAYING);
 		if (ret == GST_STATE_CHANGE_FAILURE){
 			g_print ("Failed to start up pipeline!\n");
@@ -361,7 +362,7 @@ if (typeSource == MIC) {
 		printf ("Now playing\n");
 		g_main_loop_run (loop);
 		//g_source_remove(timeoutEvent);
-		g_source_remove(displaySpectroTimeout);
+		//g_source_remove(displaySpectroTimeout);
 		gst_element_set_state (pipeline, GST_STATE_NULL);
 		printf ("Stop playing\n");
 		gst_object_unref (busMH);
@@ -442,14 +443,14 @@ if (realtime) {
 	}
 
 	//timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
-	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
+	//displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 	timeoutPrintPosition = g_timeout_add (200, (GSourceFunc) cb_print_position, pipeline);
 	gst_element_set_state (playbin, GST_STATE_PLAYING);
 	timeoutSeekToTime = g_timeout_add (101, (GSourceFunc) seek_to_time, pipeline);
 	printf ("Now playing\n");
 	g_main_loop_run (loop);
 	//g_source_remove(timeoutEvent);
-	g_source_remove(displaySpectroTimeout);
+	//g_source_remove(displaySpectroTimeout);
 	g_source_remove(timeoutPrintPosition);
 	g_source_remove(timeoutSeekToTime);
 	gst_element_set_state (playbin, GST_STATE_NULL);
@@ -512,6 +513,7 @@ else if (typeSource == JACK){
 
 	src = gst_element_factory_make ("jackaudiosrc", NULL);
 	g_assert(src);
+	g_object_set (G_OBJECT (src), "name", PACKAGE, NULL);
 	sink = gst_element_factory_make ("fakesink", NULL);
 	g_assert(sink);
 	audioconvert = gst_element_factory_make ("audioconvert", NULL);
@@ -539,12 +541,12 @@ else if (typeSource == JACK){
 		exit (1);
 		}
 	//timeoutEvent = g_timeout_add (50, (GSourceFunc) sdlEvent, pipeline);
-	displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
+	//displaySpectroTimeout = g_timeout_add (intervalTimeout, (GSourceFunc) displaySpectro, pipeline);
 	gst_element_set_state(pipeline, GST_STATE_PLAYING);
 	printf ("Now playing\n");
 	g_main_loop_run (loop);
 	//g_source_remove(timeoutEvent);
-	g_source_remove(displaySpectroTimeout);
+	//g_source_remove(displaySpectroTimeout);
 	gst_element_set_state (pipeline, GST_STATE_NULL);
 	printf ("Stop playing\n");
 	gst_object_unref(pipeline);
@@ -557,6 +559,7 @@ else if (typeSource == JACK){
 #endif
 playing = 0;
 g_source_remove(timeoutEvent);
+g_source_remove(displaySpectroTimeout);
 sdlQuit();
 #ifdef HAVE_LIBUTOUCH_GEIS
 g_source_remove(timeoutTouch);

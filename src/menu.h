@@ -17,13 +17,14 @@
 #ifndef DEFINE_MENU
 #define DEFINE_MENU
 
+gboolean useCopyPixels;
 char fontPreference[100], prefPath[100];
 char policyName[20];
-int width, presetWidth, priority, interval;
+int width, presetWidth, priority, interval, flatviewDefinition;
 gboolean realtime, enableTouch;
 float X, Y, Z, AngleH, AngleV, AngleZ, presetX, presetY, presetZ, presetAngleH, presetAngleV, presetAngleZ; 
 static GtkWidget *mainWindow;
-FILE* pref;
+FILE* pref, *rcFile;
 
 enum {
     ACTION_COLUMN,
@@ -35,7 +36,7 @@ enum {
 typedef enum ColorType ColorType;
 enum ColorType
 {
-	PURPLE, RAINBOW, RED
+	PURPLE, RED, RAINBOW
 };
 ColorType colorType;
 

@@ -30,7 +30,7 @@
 
 int ii = 0, a = 0, b = 0;
 float cr = 0, cb = 1, cg = 0, k = 0;
-float i = 0, l = 0, q = 0;
+float i = 0, l = 0, q = 0, YcoordFactor = 1, ZcoordFactor = 0;
 
 void setupSDL()
 {
@@ -84,22 +84,33 @@ gboolean displaySpectro(){
 	
 	flatViewHeight = 0.7;
 	int factor = 2;
+
+	if (viewType == THREE_D){
+			YcoordFactor = 1;
+			ZcoordFactor = 0;
+			}
+	else if (viewType == THREE_D_FLAT){
+			YcoordFactor = 5;
+			ZcoordFactor = 1;
+			}
+
 /* FLATVIEW*/
-	if (flatView){
-		
+	if (viewType == FLAT){
+		if (width < 800 || width > 1300 ){
+			useCopyPixels = FALSE;
+			}
 		float XX = 0.5, YY = -0.35, ZZ = -1;
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); 
 		glLoadIdentity();
-		
-		glTranslatef(XX, YY, ZZ);
+		glTranslatef(XX * RESIZE, YY, ZZ);
 		k = 0;
 		i = 0;
 		q = flatViewHeight / bandsNumber;
 	
-		if (changeViewParameter) {
-			glBegin(GL_QUADS);
-			l = -1;
-			for (b = 400; b >= 0; b--){
+		if (changeViewParameter || useCopyPixels == FALSE || (useCopyPixels && flatviewDefinition != 400)) {
+			l = -1.1 * RESIZE;
+			for (b = flatviewDefinition * RESIZE; b >= 0; b--){
+				glBegin(GL_QUAD_STRIP);
 				i = 0;
 				for (ii = zoom; ii < 10000 + zoom; ii+=zoomFactor) {
 					k = 0;
@@ -111,20 +122,19 @@ gboolean displaySpectro(){
 						k = (k/zoomFactor) * showGain;
 						if (i <= flatViewHeight) {
 							glColor3f(10 * k, 0, 0); 
-							glVertex3f( l, i ,0);
-							glVertex3f( l, i + q ,0);
-							glVertex3f( l + 0.0025, i + q ,0);
-							glVertex3f( l + 0.0025, i ,0);
-							}
+							glVertex2f( l, i);
+							glVertex2f( l + (1.1/flatviewDefinition), i);
+							} 
 						i += q;
 					}
-				l += 0.0025;
+				l += 1.1/flatviewDefinition;
+				glEnd();
 				}
-			glEnd();
+			//glEnd();
 			changeViewParameter = FALSE;
 			}
 		else {
-			for (b = 400; b >= 0; b--){
+			for (b = flatviewDefinition * RESIZE; b >= 0; b--){
 				for (ii = 0; ii < 10000; ii++) {
 					prec[b+1][ii] = prec[b][ii];
 					}
@@ -132,12 +142,12 @@ gboolean displaySpectro(){
 			glReadBuffer(GL_FRONT);
 			glDrawBuffer(GL_BACK);
 			// glBlitFrameBuffer had strange behavior sometimes
-			// these values are specific for width = 1200 : 
-			glRasterPos2f(-1, -0.009);
-			glCopyPixels(240, 40, 722, 590, GL_COLOR);
-			} 
+			// these values work for width from 800 to 1300 (the very best fit is at 1200): 
+			glRasterPos2f((-1.1 * RESIZE), -0.009);
+			glCopyPixels(167 * RESIZE, 40, 795 * RESIZE, 590, GL_COLOR);			
+			}
 
-		glBegin(GL_QUADS);
+		glBegin(GL_QUAD_STRIP);
 		k = 0;
 		i = 0;	
 		for (ii = zoom; ii < 10000 + zoom; ii+=zoomFactor) {
@@ -148,10 +158,8 @@ gboolean displaySpectro(){
 				k = (k/zoomFactor) * showGain;
 			if (i <= flatViewHeight) {
 				glColor3f(k * 10, 0, 0);
-				glVertex3f(0, i, 0);
-				glVertex3f(-0.0025, i, 0);
-				glVertex3f(-0.0025, i + q, 0);
-				glVertex3f(0, i + q, 0);
+				glVertex2f(0, i);
+				glVertex2f(-0.0025, i);
 				if (compareGLfloat(i, flatViewY, 0.00001)){
 					storedFreq = ii;
 					storedIntensity = (k * 40) - 80;
@@ -187,24 +195,30 @@ gboolean displaySpectro(){
 			q = x/bandsNumber;
 			for (b = (100 * factor)/f * z; b >= 0; b--) {
 				i = 0;
-				if (b > ((25 * factor)/f * z) && b < ((90 * factor)/f * z)) {
-							cg+=f * 0.01538 / factor * z;
-							}
-				if (b < ((25 * factor)/f * z)) {
-					cg-=f * 0.04 / factor * z;
-					} 
-				if (b < ((50 * factor)/f * z)) {
-					cr+=f * 0.02 / factor * z;
-					} 
-				if (b > ((70 * factor)/f * z)) {
-					cr-=f * 0.02 / factor * z;
-					} 
-				if (b > ((30 * factor)/f * z) && b < (90 * factor/f * z)) {
-					cb-=f * 0.01666 / factor * z;
-					} 
-				if (colorType == 0) {
-					cr = 1; cg = 0, cb = 1;
+				if (colorType == RAINBOW){
+					if (b > ((25 * factor)/f * z) && b < ((90 * factor)/f * z)) {
+								cg+=f * 0.01538 / factor * z;
+								}
+					if (b < ((25 * factor)/f * z)) {
+						cg-=f * 0.04 / factor * z;
+						} 
+					if (b < ((50 * factor)/f * z)) {
+						cr+=f * 0.02 / factor * z;
+						} 
+					if (b > ((70 * factor)/f * z)) {
+						cr-=f * 0.02 / factor * z;
+						} 
+					if (b > ((30 * factor)/f * z) && b < (90 * factor/f * z)) {
+						cb-=f * 0.01666 / factor * z;
+						}
 					}
+				else if (colorType == PURPLE){
+					cr = 1; cg = 0; cb = 1;
+					}
+				else if (colorType == RED){
+					cr = 1; cg = 0; cb = 0;
+					} 
+				
 				glBegin(GL_LINE_STRIP);
 				glColor3f(cr , cg, cb); glVertex3f( 0, 0 ,l);
 				for (ii = zoom; ii < 10000 + zoom; ii+=zoomFactor) {
@@ -216,7 +230,8 @@ gboolean displaySpectro(){
 						k = (k/zoomFactor) * showGain;
 						if (i <= x) {
 							glColor3f((10 * k *cr) , (10 * k *cg), (10 * k * cb)); 
-							glVertex3f( i, k ,l);
+							//glVertex3f( i, k ,l);
+							glVertex3f( i, k/(YcoordFactor), l - ((k/5) * ZcoordFactor));
 							}
 						i += q;
 					}
@@ -236,7 +251,8 @@ gboolean displaySpectro(){
 						k = (k/zoomFactor) * showGain;
 					if (i <= x) {
 						glColor3f(1, 0.3, 0.5);
-						glVertex3f( i, k ,0);
+						//glVertex3f( i, k ,0);
+						glVertex3f( i, k/(YcoordFactor), 0 - ((k/5) * ZcoordFactor));
 						if (compareGLfloat(i, YscaleX, 0.00001)){
 							storedFreq = ii;
 							storedIntensity = (k * 40) - 80;
@@ -278,54 +294,64 @@ if (change) {
 	flatViewHeight = 0.7;
 	int factor = 2;
 	GLfloat w = 1;
+	
+	if (viewType == THREE_D){
+			YcoordFactor = 1;
+			ZcoordFactor = 0;
+			}
+	else if (viewType == THREE_D_FLAT){
+			YcoordFactor = 5;
+			ZcoordFactor = 1;
+			}
+
 /* FLAT VIEW */
-	if (flatView){
-		
+	if (viewType == FLAT){
+		if (width < 800 || width > 1300 ){
+			useCopyPixels = FALSE;
+			}
 		float XX = 0.5, YY = -0.35, ZZ = -1;
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); 
 		glLoadIdentity();
-	
-		glTranslatef(XX, YY, ZZ);
+		glTranslatef(XX * RESIZE, YY, ZZ);
 		k = 0;
 		i = 0;
 		q = flatViewHeight / bandsNumber;
-
-		glBegin(GL_QUADS);
-		l = -1;
-		for (b = 400; b >= 0; b--){
-			i = 0;
-			for (ii = zoom; ii < 10000 + zoom; ii+=zoomFactor) {
-				k = 0;
-				for (a = 0; a < zoomFactor; a++) {
-					k = k + prec[b][ii+a];
-					}
-					k = (k/zoomFactor) * showGain;
-					if (i <= flatViewHeight) {
-						glColor3f(10 * k, 0, 0); 
-						glVertex3f( l, i ,0);
-						glVertex3f( l, i + q ,0);
-						glVertex3f( l + 0.0025, i + q ,0);
-						glVertex3f( l + 0.0025, i ,0);
-						}
-					i += q;
-				}
-			l += 0.0025;
-			}
 	
+			l = -1.1 * RESIZE;
+			for (b = flatviewDefinition * RESIZE; b >= 0; b--){
+				glBegin(GL_QUAD_STRIP);
+				i = 0;
+				for (ii = zoom; ii < 10000 + zoom; ii+=zoomFactor) {
+					k = 0;
+
+					for (a = 0; a < zoomFactor; a++) {
+						k = k + prec[b][ii+a];
+						}
+						k = (k/zoomFactor) * showGain;
+						if (i <= flatViewHeight) {
+							glColor3f(10 * k, 0, 0); 
+							glVertex2f( l, i);
+							glVertex2f( l + (1.1/flatviewDefinition), i);
+							} 
+						i += q;
+					}
+				l += 1.1/flatviewDefinition;
+				glEnd();
+				}
+			changeViewParameter = FALSE;
+			
+		glBegin(GL_QUAD_STRIP);
 		k = 0;
 		i = 0;	
 		for (ii = zoom; ii < 10000 + zoom; ii+=zoomFactor) {
 			for (a = 0; a < zoomFactor; a++) {
 				k = k + prec[0][ii+a];
-				prec[1][ii+a] = prec[0][ii+a];
 				}
 				k = (k/zoomFactor) * showGain;
 			if (i <= flatViewHeight) {
 				glColor3f(k * 10, 0, 0);
-				glVertex3f(0, i, 0);
-				glVertex3f(-0.0025, i, 0);
-				glVertex3f(-0.0025, i + q, 0);
-				glVertex3f(0, i + q, 0);
+				glVertex2f(0, i);
+				glVertex2f(-0.0025, i);
 				if (compareGLfloat(i, flatViewY, 0.00001)){
 					storedFreq = ii;
 					storedIntensity = (k * 40) - 80;
@@ -334,6 +360,7 @@ if (change) {
 			}
 		}
 	}
+		
 /* 3D VIEW */
 	else {
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); 
@@ -388,7 +415,9 @@ if (change) {
 						}
 						k = (k/zoomFactor) * showGain;
 						if (i <= x) {
-							glColor3f((10 * k * cr) , (10 * k * cg), (10 * k * cb)); glVertex3f( i, k ,l);
+							glColor3f((10 * k * cr) , (10 * k * cg), (10 * k * cb)); 
+							//glVertex3f( i, k ,l);
+							glVertex3f( i, k/(YcoordFactor), l - ((k/5) * ZcoordFactor));
 							}
 						i += q;
 					}
@@ -407,7 +436,8 @@ if (change) {
 						k = (k/zoomFactor) * showGain;
 					if (i <= x) {
 						glColor3f(1, 0.3, 0.5);
-						glVertex3f( i, k ,0);
+						//glVertex3f( i, k ,0);
+						glVertex3f( i, k/(YcoordFactor), 0 - ((k/5) * ZcoordFactor));
 					if (compareGLfloat(i, YscaleX, 0.00001)){
 						storedFreq = ii;
 						storedIntensity = (k * 40) - 80;

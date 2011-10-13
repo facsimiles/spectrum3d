@@ -79,9 +79,8 @@ void on_view(GtkWidget *pBtn, gpointer data)
 	}
 
 	if (strcmp(sLabel, "Flat") == 0) {
-		flatView = TRUE;
-		changeViewParameter = TRUE;
-		if (width != 1200 && playing){
+		viewType = FLAT;
+		/*if (width != 1200 && playing){
 			sdlQuit();	
 			width = 1200;
 			setupSDL();
@@ -92,12 +91,18 @@ void on_view(GtkWidget *pBtn, gpointer data)
 			}
 		else if (width != 1200 && playing == 0) {
 			width = 1200;
-			}
+			}*/
+		changeViewParameter = TRUE;
 		change = 1;
 		}
 	else {
-		flatView = FALSE;
-		if (playing && presetWidth != width){
+		if (strcmp(sLabel, "3D") == 0){
+			viewType = THREE_D;
+			}
+		else {
+			viewType = THREE_D_FLAT;
+			}
+		/*if (playing && presetWidth != width){
 			sdlQuit();
 			width = presetWidth;
 			setupSDL();
@@ -105,7 +110,7 @@ void on_view(GtkWidget *pBtn, gpointer data)
 			PROPORTION = (float)width / 1000;
 			x = 1.2 * RESIZE;
 			onReset();
-			}
+			}*/
 		change = 1;
 		}
 }

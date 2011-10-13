@@ -41,6 +41,13 @@ enum TypeSource
 };
 TypeSource typeSource;
 
+typedef enum ViewType ViewType;
+enum ViewType
+{
+	THREE_D, THREE_D_FLAT, FLAT
+};
+ViewType viewType;
+
 GtkWidget *pScaleDepth;
 
 #define RESIZE width/1200

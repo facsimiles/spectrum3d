@@ -33,7 +33,7 @@ int xX = 0, yY = 0, zZ = 0;
 /* Draw line scale and panels */
 void drawScale() {
 
-if (flatView){
+if (viewType == FLAT){
 	GLfloat i = 0, s = 0.02, y = flatViewHeight;
 	glBegin(GL_LINES);
 	glColor3f(0.9, 0.9, 0.9);
@@ -110,22 +110,6 @@ glEnd();
 }
 }
 
-	/*if (showPanels == 1) {
-		alpha = 0.2;
-		glBegin(GL_QUADS);
-		glColor4f(1, 1, 1, alpha);
-		for (i = 0; i <= 1; i+=0.1) {
-			glVertex3f( i * x, 0, 0.05); 
-			glVertex3f( i * x, 0, -z);
-			glVertex3f( i * x, yPanel, -z);
-			glVertex3f( i * x, yPanel, 0.05);
-			}
-		glVertex3f( 1 * x, 0, 0.05); 
-		glVertex3f( 1 * x, 0, -z);
-		glVertex3f( 1 * x, yPanel, -z);
-		glVertex3f( 1 * x, yPanel, 0.05);
-		glEnd();
-		}*/
 }
 
 /* Print text scale */
@@ -134,7 +118,7 @@ void RenderText() {
 	xX = 0, yY = 0, zZ = 0;
 	
 	glColor3f(0.7, 0, 0.8);
-	if (flatView){
+	if (viewType == FLAT){
 		glTranslatef(0, 0.035, 0.05);
 		}
 	else {
@@ -169,7 +153,7 @@ void RenderText() {
 
 			glDeleteTextures(1, &Texture);
 			SDL_FreeSurface(Message);
-			if (flatView){
+			if (viewType == FLAT){
 				yY -= 33;
 				}
 			else {
@@ -179,7 +163,7 @@ void RenderText() {
 }
 
 void drawPointer(){
-	if (flatView){
+	if (viewType == FLAT){
 		glBegin(GL_LINES);
 		glColor3f(0.9, 0.9, 0.9);
 		glVertex3f( -1, flatViewY, 0.001); 
@@ -201,7 +185,7 @@ void drawPointerText(){
 	xX = 0, yY = 0, zZ = 0.01;
 	
 	glColor3f(0.7, 0, 0.8);
-	if (flatView){
+	if (viewType == FLAT){
 		glTranslatef(-0.65, -0.32, -0.9);
 		}
 	else {
@@ -211,7 +195,7 @@ void drawPointerText(){
 	glScalef(0.002, 0.002, 0.002);
 	SDL_Color Color = {150, 0, 240};
 	
-	if (flatView){
+	if (viewType == FLAT){
 		sprintf(textToRender, "Pointer : %d Hz", (int)(storedFreq * hzStep), storedIntensity);
 		}
 	else {

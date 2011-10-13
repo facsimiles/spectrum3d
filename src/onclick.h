@@ -30,6 +30,13 @@ enum TypeSource
 };
 TypeSource typeSource;
 
+typedef enum ViewType ViewType;
+enum ViewType
+{
+	THREE_D, THREE_D_FLAT, FLAT
+};
+ViewType viewType;
+
 GtkObject *adjust_bands, *adjust_start;
 GtkWidget *pScaleBands, *pComboRange;
 

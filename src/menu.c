@@ -59,7 +59,7 @@ void selectFont(GtkWidget *comboColor, gpointer data)
 void onPreferences(GtkWidget* widget, gpointer data)
 {
 	GtkWidget *pPreferences, *pNotebook, *pTabLabel;
-    	GtkWidget *pSpinWidth, *pLabel, *pCheckRealtime, *pComboPolicy, *pSpinPriority, *pCheckPreset, *pCheckEnableTouch, *spinInterval, *comboColor;
+    	GtkWidget *pSpinWidth, *pLabel, *pCheckRealtime, *pComboPolicy, *pSpinPriority, *pCheckPreset, *pCheckEnableTouch, *spinInterval, *comboColor, *checkCopyPixels, *comboFlatviewDefinition;
 	GtkWidget *pFrame, *pButtonSelectFont;
 	gboolean bState;
 	int i = 0;
@@ -111,6 +111,27 @@ void onPreferences(GtkWidget* widget, gpointer data)
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pPreferences)->vbox), pHBox[3], TRUE, FALSE, 0);
 
+	/* Check button to select use of CopyPixels */
+	checkCopyPixels = gtk_check_button_new_with_label("Use CopyPixels\n for Flat View");
+	gtk_widget_set_tooltip_text (checkCopyPixels, "Use the 'glCopyPixels' function for Flat View; this will make the CPU load much lower");
+	if (useCopyPixels) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkCopyPixels), TRUE);
+		}
+	gtk_box_pack_start(GTK_BOX(pHBox[3]), checkCopyPixels, TRUE, TRUE, 0);
+	//gtk_box_pack_start(GTK_BOX(pVBox[0]), pHBox[3], FALSE, FALSE, 0);
+
+	/* Combo box to change the definition of the display of the Flat View*/
+	pFrame = gtk_frame_new("Definition of Display of Flat View");
+	comboFlatviewDefinition = gtk_combo_box_new_text();
+	gtk_container_add(GTK_CONTAINER(pFrame), comboFlatviewDefinition);
+	gtk_box_pack_start(GTK_BOX(pHBox[3]), pFrame, TRUE, TRUE, 0);
+	//gtk_box_pack_start(GTK_BOX(pVBox[0]), pHBox[3], FALSE, FALSE, 0);
+	gtk_combo_box_append_text(GTK_COMBO_BOX(comboFlatviewDefinition), "Low"); // flatviewDefinition = 200
+	gtk_combo_box_append_text(GTK_COMBO_BOX(comboFlatviewDefinition), "Medium"); // flatviewDefinition = 300
+	gtk_combo_box_append_text(GTK_COMBO_BOX(comboFlatviewDefinition), "High"); // flatviewDefinition = 400
+	gtk_combo_box_set_active(GTK_COMBO_BOX(comboFlatviewDefinition), 2);
+
+
 	/* Combo box to change the color of the display */
 	pFrame = gtk_frame_new("Color of Display");
 	comboColor = gtk_combo_box_new_text();
@@ -118,6 +139,7 @@ void onPreferences(GtkWidget* widget, gpointer data)
 	gtk_box_pack_start(GTK_BOX(pHBox[4]), pFrame, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(pVBox[0]), pHBox[4], FALSE, FALSE, 0);
 	gtk_combo_box_append_text(GTK_COMBO_BOX(comboColor), "PURPLE");
+	gtk_combo_box_append_text(GTK_COMBO_BOX(comboColor), "RED");
 	gtk_combo_box_append_text(GTK_COMBO_BOX(comboColor), "RAINBOW");
 	gtk_combo_box_set_active(GTK_COMBO_BOX(comboColor), 0);
 
@@ -197,54 +219,45 @@ void onPreferences(GtkWidget* widget, gpointer data)
     	switch (gtk_dialog_run(GTK_DIALOG(pPreferences)))
 		{
 		case GTK_RESPONSE_OK:
-	    		pref = fopen(prefPath, "w+");
-			if (pref != NULL) {
-				presetWidth = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinWidth));
-					change_adjust(NULL, NULL);
-					fprintf(pref, "%d\n", presetWidth);
-					width = presetWidth;
-					fprintf(pref, "%s\n", fontPreference);
-				gint index = gtk_combo_box_get_active(GTK_COMBO_BOX(comboColor));
-				colorType = index; // ColorType enum is detailed in menu.h
-				bState = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckPreset));
-					if (bState) {
-						presetX = X;
-							fprintf(pref, "%f\n", X);
-						presetY = Y;
-							fprintf(pref, "%f\n", Y);
-						presetZ = Z;
-							fprintf(pref, "%f\n", Z);
-						presetAngleH = AngleH;
-							fprintf(pref, "%f\n", AngleH);
-						presetAngleV = AngleV;
-							fprintf(pref, "%f\n", AngleV);
-						presetAngleZ = AngleZ;
-							fprintf(pref, "%f\n", AngleZ);
-					}
-					else {
-						fprintf(pref, "%f\n", presetX);
-						fprintf(pref, "%f\n", presetY);
-						fprintf(pref, "%f\n", presetZ);
-						fprintf(pref, "%f\n", presetAngleH);
-						fprintf(pref, "%f\n", presetAngleV);
-						fprintf(pref, "%f\n", presetAngleZ);
-						}
-				interval = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinInterval));
-				fprintf(pref, "%d\n", interval);
-				realtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckRealtime));
-					fprintf(pref, "%d\n", realtime);
-				gchar *string = gtk_combo_box_get_active_text(GTK_COMBO_BOX(pComboPolicy));
-				sprintf(policyName, "%s", string);
-					fprintf(pref, "%s\n", policyName);
-				priority = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinPriority));
-					fprintf(pref, "%d\n", priority);
-				enableTouch = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckEnableTouch));
-					fprintf(pref, "%d\n", enableTouch);
-				fclose(pref);
-			    }
-			else {
-				printf("*** WARNING ***  Cannot open preferences file\n");
+    			presetWidth = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinWidth));
+				change_adjust(NULL, NULL);
+			//	fprintf(pref, "%d\n", presetWidth);
+				width = presetWidth;
+				//fprintf(pref, "%s\n", fontPreference);
+			bState = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkCopyPixels));
+				if (bState) {
+					useCopyPixels = TRUE;
 				}
+				else {
+					useCopyPixels = FALSE;
+					}
+			gint index = gtk_combo_box_get_active(GTK_COMBO_BOX(comboFlatviewDefinition));
+				if (index == 0){
+					flatviewDefinition = 200;
+					}
+				else if (index == 1){
+					flatviewDefinition = 300;
+					}
+				else if (index == 2){
+					flatviewDefinition = 400;
+					}
+			colorType = gtk_combo_box_get_active(GTK_COMBO_BOX(comboColor));
+				 // ColorType enum is detailed in menu.h
+			bState = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckPreset));
+				if (bState) {
+					presetX = X;
+					presetY = Y;
+					presetZ = Z;
+					presetAngleH = AngleH;
+					presetAngleV = AngleV;
+					presetAngleZ = AngleZ;
+				}
+			interval = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spinInterval));
+			realtime = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckRealtime));
+			gchar *string = gtk_combo_box_get_active_text(GTK_COMBO_BOX(pComboPolicy));
+			sprintf(policyName, "%s", string);
+			priority = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(pSpinPriority));
+			enableTouch = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pCheckEnableTouch));
 		break;
 		case GTK_RESPONSE_CANCEL:
 		case GTK_RESPONSE_NONE:
@@ -415,7 +428,7 @@ void onQuickStart(GtkWidget* widget, gpointer data)
         NULL);
 	gtk_window_set_default_size(GTK_WINDOW(quickStartWindow), 500, 300);
 
-	gchar *quickStartText = " * 2 views are possible : 3D or 2D (flat view);\n * position of display and perspective can be translated or rotated along the 3 axis (see 'Shortcuts' in menu)\n * zoom can be adjusted :\n       - first displayed frequency can have almost any value;\n       - the range of displayed frequencies can vary from 40 to 20000 Hz;\n * scale (text and line) and a pointer pointing to an exact location can be displayed;\n * perspective and zoom can be changed even when playing is paused;";
+	gchar *quickStartText = " * 3 views are possible : 3D, 3D'Flat' or 2D (flat view);\n * position of display and perspective can be translated or rotated along the 3 axis (see 'Shortcuts' in menu)\n * zoom can be adjusted :\n       - first displayed frequency can have almost any value;\n       - the range of displayed frequencies can vary from 40 to 20000 Hz;\n * scale (text and line) and a pointer pointing to an exact location can be displayed;\n * perspective and zoom can be changed even when playing is paused;\n\n * if the load of the CPU is too big, you can reduce it by :\n    - set the width smaller;\n    - set the depth and the speed smaller;\n    - check the 'Use CopyPixels for FlatView' box in Preferences->Display";
 	label = gtk_label_new (quickStartText);
 	gtk_container_add(GTK_CONTAINER(GTK_DIALOG(quickStartWindow)->vbox), label);
 	gtk_widget_show_all(GTK_DIALOG(quickStartWindow)->vbox);

@@ -78,12 +78,17 @@ From the graphical interface, you can play/pause or stop playing. For audio file
 
 You can play a test sound which is a sine wave from 1 to 20000 Hz.
 
+You can display a new window that commands different filters :
+- a 10 bands equalizer; the filtered frequencies and its range can be adjusted (any values); the amplification goes from -72dB to +36dB;
+- a band-reject or band-pass filter;
+
 Audio source can be microphone, audio file or jack (if you have enabled JACK support). You can change the speed of refreshing of the display. You can show a window that allows to control an equalizer and a band-pass (BP) or band-reject (BR) filter. For the BP/BR filter, you can set the lower and upper frequencies. For the eqalizer, you can adjust the gain (from -72dB to +36dB); for each band, you can change the frequency (from 20 to 20000 Hz) it works on and its the bandwidth (from 0 to 20000 Hz). 
 
 The lowest displayed frequency is 0 Hz by default, and it can be increased. The default range is 2000 Hz. It can be decreased to 40 Hz or raised to 20000Hz. To change this, you can either change it by using the 'Range of Display' scale, or increase it by changing the factor that is on its right : this factor multiplies the frequency range. The smallest possible step between 2 analyzed and displayed frequencies is 2 Hz.
 
-You can choose between 2 types of view :  - a 3D view that shows frequency, intensity and time; It is possible to rotate or translate the display along the X, Y and Z axis, either by keyboard commands, or by mouse (+/- keyboard) commands, or by touch gestures (if enabled). All the analyzed values are kept in memory, wich implies that even if zoom or perspective changes, any value can be retrieved at any time, even when playing is paused.
+You can choose between 3 types of view :  - a 3D view that shows frequency, intensity and time; It is possible to rotate or translate the display along the X, Y and Z axis, either by keyboard commands, or by mouse (+/- keyboard) commands, or by touch gestures (if enabled). All the analyzed values are kept in memory, wich implies that even if zoom or perspective changes, any value can be retrieved at any time, even when playing is paused.
 					   - a 2D 'flat' view : that shows time versus frequency; the intensity however is represented by the amount of red colour;
+					   - a 3D 'flat' view that is somehow a compromise between the two previous views.
 
 The perespective can be reset, set to a 'front' view (frequency versus intensity), or set to values preset by the user. The text can be displayed or not, as well as the line scale. A 'pointer' can be displayed, showing a location on the scale and its exact numerical value as well as the intensity of the frequency (fot the 3D view).
 

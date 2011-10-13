@@ -4,7 +4,7 @@
 ############### INITIALIZE EVERYTHING ######################
 
 AC_INIT([Spectrum3d],
-	[1.0.0],
+	[1.1.0],
 	[nadaeck@hotmail.com], 
 	[spectrum3d])
 AC_CONFIG_SRCDIR([Makefile.am])

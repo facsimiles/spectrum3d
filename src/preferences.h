@@ -12,7 +12,7 @@ guint spect_bands;
 guint64 interval;
 float showGain, presetX, presetY, presetZ, presetAngleH, presetAngleV, presetAngleZ; 
 
-FILE* pref;
+FILE *pref, *rcFile;
 static GtkWidget *mainWindow;
 GtkWidget *pScaleDepth, *scaleButtonDepth, *pScaleBands, *pComboRange, *buttonEqualizer;
 GtkObject *adjust_bands, *adjust_start;
@@ -31,12 +31,41 @@ enum ColorType
 };
 ColorType colorType;
 
-typedef struct Preference Preference;
-struct Preference
+// Structure containing everything regarding the default values that are an Integer
+typedef struct PreferenceInt PreferenceInt;
+struct PreferenceInt
 {
-	gchar name[50];
-};
-Preference preference[1];
+	int* var;		// variable name, stored as a pointer
+	int def;		// default value
+	int min;		// minimum value
+	int max;		// maximun value
+	char *name;		// name of the variable, in a string
+	//char* info;		// any information that could be uselfull
+}; 
+// Structure containing everything regarding the default values that are a Float
+typedef struct PreferenceFloat PreferenceFloat;
+struct PreferenceFloat
+{
+	float* var;		// variable name, stored as a pointer
+	float def;		// default value
+	float min;		// minimum value
+	float max;		// maximun value
+	char *name;		// name of the variable, in a string
+}; 
+// Structure containing everything regarding the default values that are a gboolean
+typedef struct PreferenceGbool PreferenceGbool;
+struct PreferenceGbool
+{
+	gboolean* var;		// variable name, stored as a pointer
+	gboolean def;		// default value
+	char *name;		// name of the variable, in a string
+}; 
+typedef struct PreferenceString PreferenceString;
+struct PreferenceString
+{
+	char* var[20];		// variable name, stored as a pointer
+	char *name;		// name of the variable, in a string
+}; 
 
 #define RESIZE width/1200
 #define WIDTH_WINDOW 1200 * RESIZE
@@ -44,7 +73,6 @@ Preference preference[1];
 			
 void initGstreamer();
 void getFileName();
-void get_saved_values();
 void defaultValues();
 void makeDefaultPreferencesFile();
 void onStop();

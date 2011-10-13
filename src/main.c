@@ -41,6 +41,7 @@ static void on_window_destroy (GObject * object, gpointer user_data)
 		g_free(sFile);
 		}
 	onStop();
+	print_rc_file("var");
 	gtk_main_quit ();
 }
 
@@ -88,169 +89,6 @@ void selectFile(GtkWidget *pWidget, gpointer data)
 	}
 	else {
 		printf("Select a file is only possible if source is Audio file\n");
-		}
-}
-
-/* Check retrieved values for consistency */
-void compareValues(){
-	int error = 0;
-	printf("Checking values for constistency...");
-	if (presetWidth < 700 || presetWidth > 1500) {
-		ERROR("presetWidth")
-		DEFAULT_VALUES
-		}
-	char *lookforttf = NULL;
-	lookforttf = strstr(fontPreference, ".ttf");
-	if (lookforttf == NULL){
-		printf("Path of the font seems not valid.\n");
-		DEFAULT_VALUES
-		}
-	else if (interval < 100 || interval > 250) {
-		ERROR("interval")
-		DEFAULT_VALUES
-		}
-	else if (realtime != 0 && realtime != 1) {
-		ERROR("realtime")
-		DEFAULT_VALUES	
-		} 
-	else if ((strcmp(policyName, "SCHED_RR") != 0) && (strcmp(policyName, "SCHED_FIFO") != 0)){
-		printf("Realtime policy name seems not valid\n");
-		DEFAULT_VALUES
-		}
-	else if (priority < 50 || priority > 80) {
-		ERROR("priority")
-		DEFAULT_VALUES	
-		}
-	else if (enableTouch != 0 && enableTouch != 1) {
-		ERROR("enableTouch")
-		DEFAULT_VALUES	
-		}
-	else {
-		printf(" OK\n");
-		}
-}
-
-/* Print default values in the 'Preferences' file */
-void makeDefaultPreferencesFile() {
-	printf("Writing default values in 'preferences' file\n");
-	fprintf(pref, "%d\n", presetWidth);
-	fprintf(pref, "%s\n", fontPreference);
-	fprintf(pref, "%f\n", presetX);
-	fprintf(pref, "%f\n", presetY);
-	fprintf(pref, "%f\n", presetZ);
-	fprintf(pref, "%f\n", presetAngleH);
-	fprintf(pref, "%f\n", presetAngleV);
-	fprintf(pref, "%f\n", presetAngleZ);
-	fprintf(pref, "%lld\n", interval);
-	fprintf(pref, "%d\n", realtime);
-	fprintf(pref, "%s\n", policyName);
-	fprintf(pref, "%d\n", priority);
-	fprintf(pref, "%d\n", enableTouch);
-}
-
-/* Determine values as default; this will happen either at the first start of Spectrum3d, either when something went wrong when checking for values consistency */
-void defaultValues(){
-	printf("Setting values to default\n");
-	//struct stat fileStat;
-	char fontHomePath[100];
-	//sprintf(fontHomePath, "%s/.%s/fonts/FreeSans.ttf", getenv("HOME"), PACKAGE);
-	sprintf(fontHomePath, "%s/.%s/fonts/FreeSans.ttf", g_get_home_dir(), PACKAGE);
-	presetWidth = 850;
-	if (g_file_test("/usr/local/share/fonts/FreeSans.ttf", G_FILE_TEST_IS_REGULAR)) {
-		sprintf(fontPreference, "/usr/local/share/fonts/FreeSans.ttf");
-		}
-	else if (g_file_test("/usr/share/fonts/FreeSans.ttf", G_FILE_TEST_IS_REGULAR)) {
-		sprintf(fontPreference, "/usr/share/fonts/FreeSans.ttf");
-		}
-	else if (g_file_test(fontHomePath, G_FILE_TEST_IS_REGULAR) == 0) {
-		sprintf(fontPreference, "%s", fontHomePath);
-		}
-	/*if (stat("/usr/local/share/fonts/FreeSans.ttf", &fileStat) == 0) {
-		sprintf(fontPreference, "/usr/local/share/fonts/FreeSans.ttf");
-		}
-	else if (stat("/usr/share/fonts/FreeSans.ttf", &fileStat) == 0) {
-		sprintf(fontPreference, "/usr/share/fonts/FreeSans.ttf");
-		}
-	else if (stat(fontHomePath, &fileStat) == 0) {
-		sprintf(fontPreference, "%s/.%s/fonts/FreeSans.ttf", getenv("HOME"), PACKAGE);
-		}*/
-	else {
-		printf("WARNING : font file was not found; please select a '.ttf' font file via 'Menu->Edit->Preferences->Select Font'.\n");
-		errorMessageWindow("WARNING : font file was not found \nPlease select a '.ttf' font file via 'Menu->Edit->Preferences->Select Font'.");
-		sprintf(fontPreference, "null");
-		} 
-	printf("Font path is %s\n", fontPreference);
-	presetX = -0.495833; 
-	presetY = -0.070833;
-	presetZ = -1.050000;
-	presetAngleH = -16.000000;
-	presetAngleV = 10.000000;
-	presetAngleZ = 0.000000;
-	interval = 150;
-	realtime = 0;
-	sprintf(policyName, "SCHED_RR");
-	priority = 50;
-	enableTouch = 1;
-}
-
-/* Get the saved values from the configuration file */
-void openPreferenceFile(){
-	char confString[105]="";
-	//sprintf(prefPath, "%s/.spectrum3d/spectrum3d.pref", getenv("HOME"));
-	sprintf(prefPath, "%s/.spectrum3d/spectrum3d.pref", g_get_home_dir());
-	pref = fopen(prefPath, "r+"); 
-	if (pref != NULL){
-		printf("Opening the 'preferences' file and getting the saved values\n");
-		char *result = NULL;
-		result = fgets(confString, 6, pref); 
-			presetWidth = strtol(confString, NULL, 10);
-		result = fgets(fontPreference, 100, pref);
-			fontPreference[strlen(fontPreference)-1] = 0;
-				printf("Font path is = %s\n", fontPreference);
-		result = fgets(confString, 20, pref); 
-			presetX = strtof(confString, NULL);
-		result = fgets(confString, 20, pref); 
-			presetY = strtof(confString, NULL);
-		result = fgets(confString, 20, pref); 
-			presetZ = strtof(confString, NULL);
-		result = fgets(confString, 20, pref); 
-			presetAngleH = strtof(confString, NULL);
-		result = fgets(confString, 20, pref); 
-			presetAngleV = strtof(confString, NULL);
-		result = fgets(confString, 20, pref); 
-			presetAngleZ = strtof(confString, NULL);
-		result = fgets(confString, 6, pref); 
-			interval = strtol(confString, NULL, 10);
-		result = fgets(confString, 4, pref); 
-			realtime = strtol(confString, NULL, 10);
-				if (realtime){
-					printf("REALTIME mode is enabled : ");
-					}
-		result = fgets(policyName, 15, pref);
-			policyName[strlen(policyName)-1] = 0;
-				if (realtime){
-					printf("Policy = %s, ", policyName);
-					}
-		result = fgets(confString, 6, pref); 
-			priority = strtol(confString, NULL, 10); 
-				if (realtime){
-					printf("priority = %d\n", priority);
-					}
-		result = fgets(confString, 4, pref); 
-			enableTouch = strtol(confString, NULL, 10);
-#ifdef HAVE_LIBUTOUCH_GEIS
-				if (enableTouch){
-					printf("Multitouch is enabled\n");
-					}
-#endif
-		fclose(pref);
-		compareValues();
-		printf(" ");	
-		}
-	else {  
-//If the 'preferences file doesn't exist, create one with default values
-		printf ("WARNING : 'Preferences' file doesn't exist or cannot be open; this is normal if you run Spectrum3d for the first time; \n");
-		DEFAULT_VALUES
 		}
 }
 
@@ -302,12 +140,13 @@ int main(int argc, char *argv[])
 	AUDIOFREQ = 44100;
 	pointer = FALSE;
 	colorType = PURPLE;
-				
-	openPreferenceFile();
+	useCopyPixels = TRUE;
+					
+	get_saved_values();
 
 	width = presetWidth;
 				
-	GtkWidget *pVBox[4], *pHBox[13], *pMenuBar, *pMenu, *pMenuItem, *button, *pButton[7], *pButtonSelect, *pRadio[5], *pComboZoom, *pComboSpeed, *pSpinSpeed, *pFrame, *pScaleGain, *pCheckTextScale, *pCheckLineScale, *checkPointer, *separator, *spinTestSound, *image, *label, *volumeTestSound;
+	GtkWidget *pVBox[4], *pHBox[13], *pMenuBar, *pMenu, *pMenuItem, *button, *pButton[7], *pButtonSelect, *pRadio[6], *pComboZoom, *pComboSpeed, *pSpinSpeed, *pFrame, *pScaleGain, *pCheckTextScale, *pCheckLineScale, *checkPointer, *separator, *spinTestSound, *image, *label, *volumeTestSound;
 	GtkObject *adjustment;
 	GdkColor colorFrame;
 	int i = 0;
@@ -319,7 +158,7 @@ int main(int argc, char *argv[])
 		}
 	bandsNumber = widthFrame;
 	hzStep = (AUDIOFREQ/2) / spect_bands;
-	
+
 	initGstreamer();
 	gtk_init (&argc, &argv);
 	mainWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -509,7 +348,7 @@ NULL);
 	gtk_widget_set_tooltip_text (buttonEqualizer, "Show/Hide the filter and equalizer window");
 	gtk_box_pack_start(GTK_BOX(pHBox[7]), buttonEqualizer, FALSE, FALSE, 20);
 	g_signal_connect(G_OBJECT(buttonEqualizer), "clicked", G_CALLBACK(effects_window), NULL);
-	
+
 /* GENERAL FRAME DISPLAY SETTINGS*/
 	sprintf(textLabel, "<big><b>%s</b></big>", "DISPLAY SETTINGS");
 	textLabel_Widget = gtk_label_new(NULL);
@@ -604,13 +443,18 @@ NULL);
 	gtk_box_pack_start(GTK_BOX(pHBox[5]), pFrame, TRUE, TRUE, 0);	
 	pRadio[4] = gtk_radio_button_new_with_label(NULL, "3D");
 	gtk_container_add(GTK_CONTAINER(pFrame), pHBox[10]);
-    	gtk_box_pack_start(GTK_BOX (pHBox[10]), pRadio[4], TRUE, TRUE, 0);
+    	gtk_box_pack_start(GTK_BOX (pHBox[10]), pRadio[4], TRUE, FALSE, 0);
 	gtk_widget_set_tooltip_text (pRadio[4], "3D view");
-	g_signal_connect(G_OBJECT(pRadio[4]), "toggled", G_CALLBACK(on_view), pRadio[4]);
-	pRadio[5] = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (pRadio[4]), "Flat");
-    	gtk_box_pack_start(GTK_BOX (pHBox[10]), pRadio[5], TRUE, TRUE, 0);
-	gtk_widget_set_tooltip_text (pRadio[5], "Flat (2D) view, with intensity beeing represented as the amount of red colour");
+
+	pRadio[5] = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (pRadio[4]), "3D Flat");
+	gtk_box_pack_start(GTK_BOX (pHBox[10]), pRadio[5], TRUE, FALSE, 0);
+	gtk_widget_set_tooltip_text (pRadio[5], "3D 'flat' view");
 	g_signal_connect(G_OBJECT(pRadio[5]), "toggled", G_CALLBACK(on_view), pRadio[4]);
+
+	pRadio[6] = gtk_radio_button_new_with_label_from_widget(GTK_RADIO_BUTTON (pRadio[5]), "Flat");
+    	gtk_box_pack_start(GTK_BOX (pHBox[10]), pRadio[6], TRUE, FALSE, 0);
+	gtk_widget_set_tooltip_text (pRadio[6], "Flat (2D) view, with intensity beeing represented as the amount of red colour");
+	g_signal_connect(G_OBJECT(pRadio[6]), "toggled", G_CALLBACK(on_view), pRadio[4]);
 
 /* 'Reset', 'Front' and 'Preset' buttons */
 	gtk_box_pack_start(GTK_BOX(pHBox[5]), pHBox[9], FALSE, FALSE, 0);

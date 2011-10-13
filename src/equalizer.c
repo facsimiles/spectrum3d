@@ -165,7 +165,9 @@ gchar* format_gain_eq_value (GtkScale *scale, gdouble value) // adapt the displa
 /* Active or deactivate the BP/BR filter */
 void onCheckBandPass(GtkWidget *pToggle, gpointer data)
 {
-	activateFilter = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pToggle));
+	if (pToggle != NULL){
+		activateFilter = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(pToggle));
+		}
 	if (activateFilter) {
 		BPlowerFreq = (gfloat)(gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinBPlowerValue)));
 		BPupperFreq = (gfloat)(gtk_spin_button_get_value (GTK_SPIN_BUTTON(spinBPupperValue)));

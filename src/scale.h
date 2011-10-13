@@ -26,4 +26,11 @@ GLfloat YscaleX, flatViewY;
 TTF_Font *font;
 #define RESIZE width/1200
 
+typedef enum ViewType ViewType;
+enum ViewType
+{
+	THREE_D, THREE_D_FLAT, FLAT
+};
+ViewType viewType;
+
 #endif
