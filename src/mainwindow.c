@@ -211,6 +211,8 @@ return TRUE;
 }
 
 int checkJackActive(){
+
+#ifdef HAVE_LIBJACK
 	printf("*** Checking if JACK is running (Jack error messages are normal):\n");
 	jack_client_t *src_client;
 	jack_status_t status;
@@ -223,6 +225,10 @@ int checkJackActive(){
 		printf("*** --> OK, JACK is not running\n");
 		return 0;
 		}
+#endif
+#ifdef HAVE_LIBJACK
+	return 0;
+#endif
 }
 
 getFileUri(){

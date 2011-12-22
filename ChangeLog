@@ -1,4 +1,10 @@
 
+2011-12-22  Bernard Victor Delvaux  <nadaeck@hotmail.com>
+    Version : Spectrum3d-1.1.1 :
+    * mainwindow.c : some code regarding jack have been put between #ifdef/#endif;
+    * configure.ac : --disable-jack and --disable-geis that were not working have been fixed thanks to Valentino Dell'Aica's help;
+    * src/Makefile.am : config.h has been removed from 'spectrum3d_SOURCES' since it is already created from config.h.in in configure.ac;
+
 2011-10-13  Bernard Victor Delvaux  <nadaeck@hotmail.com>
     Version : Spectrum3d-1.1.0 :
     * display.c : in the 'flat view', the graph is drawed using the GL_QUAD_STRIP instead of a lot of GL_QUADS; this saves a lot of CPU; 

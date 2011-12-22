@@ -4,7 +4,7 @@
 ############### INITIALIZE EVERYTHING ######################
 
 AC_INIT([Spectrum3d],
-	[1.1.0],
+	[1.1.1],
 	[nadaeck@hotmail.com], 
 	[spectrum3d])
 AC_CONFIG_SRCDIR([Makefile.am])
@@ -53,8 +53,8 @@ AC_CHECK_LIB([GLU], [gluBeginCurve], [],
 	[AC_MSG_ERROR([OpenGL(GLU) library is required for this program])])
 # Check and link for JACK (if jacklib is present and if this option is not disabled)
 AS_IF([test "x$enable_jack" != "xno"], [
-  AC_CHECK_LIB([jack], [jack_client_open], [], [jack=0])
-])
+  AC_CHECK_LIB([jack], [jack_client_open], [], [jack=0])],
+	[jack=0])
 # Check and link for MULTITOUCH (if libbamf and libutouch-geis are present and if this option is not disabled)
 # Check first for LIBBAMF; if it is there, check for LIBUTOUCH-GEIS version 2; if it is there, check if LIBUTOUCH-GEIS version is > 2.0.11
 AS_IF([test "x$enable_geis" != "xno"], [
@@ -69,8 +69,8 @@ AS_IF([test "x$enable_geis" != "xno"], [
 			AC_DEFINE([GEIS_12], [1], [Define to 1 if you have the `utouch-geis' library > 2.0.11.])
 			], [geis12=0])
 		], [geis=0])
-	], [geis=0])
-])
+	], [geis=0])],
+	[geis=0])
 
 # Checks for header files.		
 AC_CHECK_HEADERS([stdlib.h string.h])
